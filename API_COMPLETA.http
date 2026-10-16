@@ -1,0 +1,843 @@
+###############################################################################
+# DEPPI API — coleção completa de endpoints
+# Compatível com VS Code REST Client e clientes com sintaxe de arquivos .http.
+#
+# Uso recomendado:
+# 1. Inicie a API (`npm run dev`).
+# 2. Execute "Login". As demais requisições usam o token retornado.
+# 3. Ajuste os IDs abaixo conforme os dados do seu banco.
+# 4. Os endpoints DELETE e de alteração de status modificam dados reais.
+###############################################################################
+
+@baseUrl = http://localhost:3000
+@accessToken = {{login.response.body.$.data.accessToken}}
+@refreshToken = {{login.response.body.$.data.refreshToken}}
+@resetToken = {{forgotPassword.response.body.$.data.resetToken}}
+
+@userId = 1
+@roleId = 1
+@permissionId = 1
+@courseId = 1
+@enrollmentId = 1
+@institutionId = 1
+@departmentId = 1
+@professorId = 1
+@courseDocumentId = 00000000-0000-0000-0000-000000000000
+@enrollmentDocumentId = 00000000-0000-0000-0000-000000000000
+
+###############################################################################
+# SISTEMA E SAÚDE
+###############################################################################
+
+### Health check
+GET {{baseUrl}}/health
+
+### Health check sem corpo
+HEAD {{baseUrl}}/health
+
+### Informações básicas da API
+GET {{baseUrl}}/api
+
+### Baixar coleção REST legada
+GET {{baseUrl}}/http/REST.http
+
+### Baixar exemplos de dashboard e documentos
+GET {{baseUrl}}/http/DOCS_DASHBOARD.http
+
+###############################################################################
+# AUTENTICAÇÃO E CONTA DO ALUNO
+###############################################################################
+
+### Login
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@deppi.com",
+  "password": "admin123"
+}
+
+### Cadastro público de aluno
+# CPF e matrícula precisam ser únicos. `registration` é opcional.
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Maria da Silva",
+  "email": "maria.aluna@example.com",
+  "cpf": "52998224725",
+  "registration": "2026001234",
+  "password": "senhaSegura123",
+  "confirmPassword": "senhaSegura123"
+}
+
+### Renovar sessão e rotacionar refresh token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Solicitar recuperação de senha
+# Em desenvolvimento, `data.resetToken` é retornado para facilitar testes.
+# @name forgotPassword
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "maria.aluna@example.com"
+}
+
+### Redefinir senha
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "{{resetToken}}",
+  "password": "novaSenhaSegura123",
+  "confirmPassword": "novaSenhaSegura123"
+}
+
+### Logout — revoga access token e refresh token informado
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###############################################################################
+# PERFIL DO USUÁRIO AUTENTICADO
+###############################################################################
+
+### Consultar meu perfil
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{accessToken}}
+
+### Atualizar meu perfil e telefones
+PATCH {{baseUrl}}/users/me
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Administrador Atualizado",
+  "personalEmail": "contato.pessoal@example.com",
+  "personalPhones": ["79999999999"],
+  "institutionalPhones": ["7933334444"]
+}
+
+### Alterar minha senha
+PATCH {{baseUrl}}/users/me/password
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "currentPassword": "admin123",
+  "newPassword": "novaSenhaSegura123",
+  "confirmPassword": "novaSenhaSegura123"
+}
+
+### Alterar meu endereço
+PATCH {{baseUrl}}/users/me/address
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "address": "Avenida Central, 123, Aracaju - SE"
+}
+
+###############################################################################
+# USUÁRIOS — ADMINISTRAÇÃO
+###############################################################################
+
+### Listar usuários
+GET {{baseUrl}}/users
+Authorization: Bearer {{accessToken}}
+
+### Consultar usuário por ID
+GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Criar usuário
+# @name createUser
+POST {{baseUrl}}/users
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Carlos Oliveira",
+  "email": "carlos@example.com",
+  "password": "senhaSegura123",
+  "roleId": 2,
+  "personalEmail": "carlos.pessoal@example.com",
+  "institutionalPhones": ["7933335555"],
+  "personalPhones": ["79988887777"]
+}
+
+### Atualizar usuário
+PATCH {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Carlos Oliveira Atualizado",
+  "email": "carlos.atualizado@example.com",
+  "roleId": 2,
+  "personalPhones": ["79977776666"]
+}
+
+### Excluir usuário
+DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# FOTO DE PERFIL
+###############################################################################
+
+### Enviar ou substituir foto de perfil
+POST {{baseUrl}}/users/{{userId}}/photo
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=UserPhotoBoundary
+
+--UserPhotoBoundary
+Content-Disposition: form-data; name="photo"; filename="user-photo.jpg"
+Content-Type: image/jpeg
+
+< ./sample/user-photo.jpg
+--UserPhotoBoundary--
+
+### Visualizar foto de perfil
+GET {{baseUrl}}/users/{{userId}}/photo
+Authorization: Bearer {{accessToken}}
+
+### Excluir foto de perfil
+DELETE {{baseUrl}}/users/{{userId}}/photo
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# CADASTRO ADMINISTRATIVO LEGADO DE USUÁRIOS
+###############################################################################
+
+### Listar cadastros completos
+GET {{baseUrl}}/register/usuarios
+Authorization: Bearer {{accessToken}}
+
+### Consultar cadastro completo
+GET {{baseUrl}}/register/usuarios/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+### Criar cadastro administrativo completo
+POST {{baseUrl}}/register/usuarios
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "cpf": "11144477735",
+  "matricula": "SIAPE-12345",
+  "password": "senhaSegura123",
+  "email": "servidor@example.com",
+  "roleId": 2,
+  "nome_usual": "João Souza",
+  "nome_registro": "João Antônio de Souza",
+  "email_secundario": "joao.pessoal@example.com",
+  "telefones_institucionais": "7933331111",
+  "telefones_pessoais": "79999991111",
+  "em_pgd": false,
+  "data_nascimento": "1985-05-20",
+  "email_siape": "joao.souza@instituicao.edu.br"
+}
+
+### Atualizar cadastro administrativo
+PUT {{baseUrl}}/register/usuarios/{{userId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nome_usual": "João Souza Atualizado",
+  "email": "joao.atualizado@example.com",
+  "telefones_pessoais": "79988881111"
+}
+
+### Excluir cadastro administrativo
+DELETE {{baseUrl}}/register/usuarios/{{userId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# PAPÉIS E PERMISSÕES (RBAC)
+###############################################################################
+
+### Listar papéis e permissões disponíveis
+GET {{baseUrl}}/roles
+Authorization: Bearer {{accessToken}}
+
+### Consultar papel por ID
+GET {{baseUrl}}/roles/{{roleId}}
+Authorization: Bearer {{accessToken}}
+
+### Criar papel
+POST {{baseUrl}}/roles
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Coordenador"
+}
+
+### Renomear papel
+PATCH {{baseUrl}}/roles/{{roleId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Coordenador Geral"
+}
+
+### Substituir todas as permissões do papel
+PUT {{baseUrl}}/roles/{{roleId}}/permissions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "permissionIds": [1, 2, 3]
+}
+
+### Adicionar permissão ao papel
+POST {{baseUrl}}/roles/{{roleId}}/permissions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "permissionId": {{permissionId}}
+}
+
+### Remover permissão do papel
+DELETE {{baseUrl}}/roles/{{roleId}}/permissions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "permissionId": {{permissionId}}
+}
+
+### Excluir papel
+DELETE {{baseUrl}}/roles/{{roleId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# PROFESSORES
+###############################################################################
+
+### Listar todos os professores
+GET {{baseUrl}}/professors
+Authorization: Bearer {{accessToken}}
+
+### Listar somente professores ativos
+GET {{baseUrl}}/professors?active=true
+Authorization: Bearer {{accessToken}}
+
+### Cadastrar professor
+POST {{baseUrl}}/professors
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Professora Helena Costa",
+  "email": "helena.professora@example.com",
+  "password": "senhaSegura123",
+  "registration": "SIAPE-98765",
+  "cpf": "11144477735"
+}
+
+### Editar professor
+PATCH {{baseUrl}}/professors/{{professorId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Professora Helena Costa Atualizada",
+  "email": "helena.atualizada@example.com"
+}
+
+### Ativar ou inativar professor
+PATCH {{baseUrl}}/professors/{{professorId}}/toggle
+Authorization: Bearer {{accessToken}}
+
+### Excluir professor
+DELETE {{baseUrl}}/professors/{{professorId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# INSTITUIÇÕES
+###############################################################################
+
+### Listar instituições
+GET {{baseUrl}}/institutions
+Authorization: Bearer {{accessToken}}
+
+### Listar somente instituições ativas
+GET {{baseUrl}}/institutions?active=true
+Authorization: Bearer {{accessToken}}
+
+### Consultar instituição por ID
+GET {{baseUrl}}/institutions/{{institutionId}}
+Authorization: Bearer {{accessToken}}
+
+### Consultar o total de instituições cadastradas
+GET {{baseUrl}}/institutions/count
+Authorization: Bearer {{accessToken}}
+
+### Criar instituição
+POST {{baseUrl}}/institutions
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Instituto Federal de Sergipe",
+  "cnpj": "12.345.678/0001-90",
+  "acronym": "IFS",
+  "city": "Aracaju",
+  "state": "SE"
+}
+
+### Editar instituição
+PATCH {{baseUrl}}/institutions/{{institutionId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Instituto Federal de Sergipe Atualizado",
+  "cnpj": "12.345.678/0001-90",
+  "acronym": "IFS"
+}
+
+### Ativar ou inativar instituição
+PATCH {{baseUrl}}/institutions/{{institutionId}}/toggle
+Authorization: Bearer {{accessToken}}
+
+### Excluir instituição
+DELETE {{baseUrl}}/institutions/{{institutionId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# DEPARTAMENTOS
+###############################################################################
+
+### Listar departamentos
+GET {{baseUrl}}/departments
+Authorization: Bearer {{accessToken}}
+
+### Filtrar departamentos por instituição e ativos
+GET {{baseUrl}}/departments?institutionId={{institutionId}}&active=true
+Authorization: Bearer {{accessToken}}
+
+### Consultar departamento por ID
+GET {{baseUrl}}/departments/{{departmentId}}
+Authorization: Bearer {{accessToken}}
+
+### Criar departamento vinculado a uma instituição
+POST {{baseUrl}}/departments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Departamento de Extensão",
+  "acronym": "DEX",
+  "institutionId": {{institutionId}}
+}
+
+### Editar departamento ou alterar instituição vinculada
+PATCH {{baseUrl}}/departments/{{departmentId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Departamento de Extensão e Pesquisa",
+  "acronym": "DEPI",
+  "institutionId": {{institutionId}}
+}
+
+### Ativar ou inativar departamento
+PATCH {{baseUrl}}/departments/{{departmentId}}/toggle
+Authorization: Bearer {{accessToken}}
+
+### Excluir departamento
+DELETE {{baseUrl}}/departments/{{departmentId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# CURSOS
+###############################################################################
+
+### Listar cursos
+GET {{baseUrl}}/courses
+Authorization: Bearer {{accessToken}}
+
+### Buscar e filtrar cursos
+# status: DRAFT | PENDING_APPROVAL | APPROVED | PUBLISHED | CLOSED | REJECTED
+GET {{baseUrl}}/courses?search=Node&status=PUBLISHED&actionType=Curso&offerModel=EAD&campus=Aracaju
+Authorization: Bearer {{accessToken}}
+
+### Consultar curso por ID
+GET {{baseUrl}}/courses/{{courseId}}
+Authorization: Bearer {{accessToken}}
+
+### Criar curso
+POST {{baseUrl}}/courses
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "campus": "Campus Aracaju",
+  "actionType": "Curso",
+  "title": "Curso de Extensão em Node.js",
+  "thematicArea": "Tecnologia",
+  "extensionLine": "Desenvolvimento de Software",
+  "startDate": "2026-11-10T13:00:00.000Z",
+  "endDateEstimated": "2026-12-10T21:00:00.000Z",
+  "minBeneficiaries": 10,
+  "maxBeneficiaries": 40,
+  "executionHours": 40,
+  "responsibleId": {{userId}},
+  "location": "Laboratório 01",
+  "funding": "Institucional",
+  "institutionalProgram": "Programa de Extensão",
+  "offerModel": "Presencial",
+  "coverageMunicipalities": ["Aracaju", "São Cristóvão"],
+  "evaluationMethods": ["Projeto prático", "Frequência"],
+  "disclosureMethods": ["E-mail", "Portal institucional"],
+  "activitiesPerformed": "Aulas teóricas, práticas orientadas e projeto final."
+}
+
+### Editar curso — o PUT exige o objeto completo
+PUT {{baseUrl}}/courses/{{courseId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "campus": "Campus Aracaju",
+  "actionType": "Curso",
+  "title": "Curso de Extensão em Node.js — 2ª edição",
+  "thematicArea": "Tecnologia",
+  "extensionLine": "Desenvolvimento de Software",
+  "startDate": "2026-11-10T13:00:00.000Z",
+  "endDateEstimated": "2026-12-15T21:00:00.000Z",
+  "minBeneficiaries": 10,
+  "maxBeneficiaries": 50,
+  "executionHours": 48,
+  "responsibleId": {{userId}},
+  "location": "Laboratório 02",
+  "funding": "Institucional",
+  "institutionalProgram": "Programa de Extensão",
+  "offerModel": "Híbrido",
+  "coverageMunicipalities": ["Aracaju", "São Cristóvão"],
+  "evaluationMethods": ["Projeto prático", "Frequência"],
+  "disclosureMethods": ["E-mail", "Portal institucional"],
+  "activitiesPerformed": "Aulas teóricas, práticas orientadas e projeto final."
+}
+
+### Submeter curso para aprovação
+PATCH {{baseUrl}}/courses/{{courseId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "PENDING_APPROVAL"
+}
+
+### Aprovar curso
+PATCH {{baseUrl}}/courses/{{courseId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
+
+### Rejeitar curso
+PATCH {{baseUrl}}/courses/{{courseId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "REJECTED",
+  "reason": "Carga horária precisa ser revisada."
+}
+
+### Publicar curso aprovado
+PATCH {{baseUrl}}/courses/{{courseId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "PUBLISHED"
+}
+
+### Encerrar curso publicado
+PATCH {{baseUrl}}/courses/{{courseId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "CLOSED"
+}
+
+### Excluir curso
+DELETE {{baseUrl}}/courses/{{courseId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# CAPA E DOCUMENTOS DE CURSO
+###############################################################################
+
+### Enviar ou substituir capa do curso
+POST {{baseUrl}}/courses/{{courseId}}/cover
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=CourseCoverBoundary
+
+--CourseCoverBoundary
+Content-Disposition: form-data; name="cover"; filename="course-cover.png"
+Content-Type: image/png
+
+< ./sample/course-cover.png
+--CourseCoverBoundary--
+
+### Enviar documento do curso
+POST {{baseUrl}}/courses/{{courseId}}/files
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=CourseFileBoundary
+
+--CourseFileBoundary
+Content-Disposition: form-data; name="file"; filename="course-file.pdf"
+Content-Type: application/pdf
+
+< ./sample/course-file.pdf
+--CourseFileBoundary--
+
+### Listar documentos do curso
+GET {{baseUrl}}/courses/{{courseId}}/files
+Authorization: Bearer {{accessToken}}
+
+### Baixar documento do curso
+GET {{baseUrl}}/courses/{{courseId}}/files/{{courseDocumentId}}/download
+Authorization: Bearer {{accessToken}}
+
+### Excluir documento do curso
+DELETE {{baseUrl}}/courses/{{courseId}}/files/{{courseDocumentId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# INSCRIÇÕES
+###############################################################################
+
+### Listar minhas inscrições
+GET {{baseUrl}}/enroll/enrollments/me
+Authorization: Bearer {{accessToken}}
+
+### Listar inscrições de um curso
+GET {{baseUrl}}/enroll/courses/{{courseId}}/enrollments
+Authorization: Bearer {{accessToken}}
+
+### Consultar inscrição por ID
+GET {{baseUrl}}/enroll/enrollments/{{enrollmentId}}
+Authorization: Bearer {{accessToken}}
+
+### Realizar inscrição
+POST {{baseUrl}}/enroll/courses/{{courseId}}/enrollments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "userId": {{userId}},
+  "name": "Maria da Silva",
+  "institution": "Instituto Federal de Sergipe",
+  "category": "Aluno",
+  "bond": "Discente",
+  "receivesScholarship": false,
+  "dedicatedHours": 8,
+  "participationStart": "2026-11-10T13:00:00.000Z",
+  "participationEnd": "2026-12-10T21:00:00.000Z"
+}
+
+### Atualizar dados da inscrição
+PATCH {{baseUrl}}/enroll/enrollments/{{enrollmentId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "category": "Monitor",
+  "bond": "Bolsista",
+  "receivesScholarship": true,
+  "dedicatedHours": 12
+}
+
+### Aprovar inscrição
+# status: PENDING | APPROVED | REJECTED | WAITLISTED | CANCELLED
+PATCH {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "APPROVED"
+}
+
+### Colocar inscrição na lista de espera
+PATCH {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "WAITLISTED",
+  "reason": "Limite inicial de vagas atingido."
+}
+
+### Rejeitar inscrição
+PATCH {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "REJECTED",
+  "reason": "Documentação incompleta."
+}
+
+### Cancelar inscrição — o registro e histórico são preservados
+DELETE {{baseUrl}}/enroll/enrollments/{{enrollmentId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "reason": "Solicitação do participante."
+}
+
+### Consultar histórico do curso e das inscrições
+GET {{baseUrl}}/enroll/courses/{{courseId}}/history
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# DOCUMENTOS DA INSCRIÇÃO
+###############################################################################
+
+### Listar documentos enviados na inscrição
+GET {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/documents
+Authorization: Bearer {{accessToken}}
+
+### Enviar documento para inscrição
+POST {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/documents
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=EnrollmentFileBoundary
+
+--EnrollmentFileBoundary
+Content-Disposition: form-data; name="file"; filename="comprovante.pdf"
+Content-Type: application/pdf
+
+< ./sample/comprovante.pdf
+--EnrollmentFileBoundary--
+
+### Substituir documento da inscrição
+PUT {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/documents/{{enrollmentDocumentId}}
+Authorization: Bearer {{accessToken}}
+Content-Type: multipart/form-data; boundary=EnrollmentReplaceBoundary
+
+--EnrollmentReplaceBoundary
+Content-Disposition: form-data; name="file"; filename="comprovante-atualizado.pdf"
+Content-Type: application/pdf
+
+< ./sample/comprovante-atualizado.pdf
+--EnrollmentReplaceBoundary--
+
+### Baixar documento da inscrição
+GET {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/documents/{{enrollmentDocumentId}}/download
+Authorization: Bearer {{accessToken}}
+
+### Excluir documento da inscrição
+DELETE {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/documents/{{enrollmentDocumentId}}
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# DASHBOARD
+###############################################################################
+
+### Consultar totais, gráficos e atividades recentes
+GET {{baseUrl}}/dashboard
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# RELATÓRIOS JSON
+###############################################################################
+
+### Relatório de cursos
+GET {{baseUrl}}/reports/courses
+Authorization: Bearer {{accessToken}}
+
+### Relatório de inscrições por curso
+GET {{baseUrl}}/reports/enrollments
+Authorization: Bearer {{accessToken}}
+
+### Relatório de alunos
+GET {{baseUrl}}/reports/students
+Authorization: Bearer {{accessToken}}
+
+### Relatório de professores
+GET {{baseUrl}}/reports/professors
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# EXPORTAÇÕES EXCEL
+###############################################################################
+
+### Exportar cursos em Excel
+GET {{baseUrl}}/reports/courses/export/excel
+Authorization: Bearer {{accessToken}}
+
+### Exportar inscrições em Excel
+GET {{baseUrl}}/reports/enrollments/export/excel
+Authorization: Bearer {{accessToken}}
+
+### Exportar alunos em Excel
+GET {{baseUrl}}/reports/students/export/excel
+Authorization: Bearer {{accessToken}}
+
+### Exportar professores em Excel
+GET {{baseUrl}}/reports/professors/export/excel
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# EXPORTAÇÕES PDF
+###############################################################################
+
+### Exportar cursos em PDF
+GET {{baseUrl}}/reports/courses/export/pdf
+Authorization: Bearer {{accessToken}}
+
+### Exportar inscrições em PDF
+GET {{baseUrl}}/reports/enrollments/export/pdf
+Authorization: Bearer {{accessToken}}
+
+### Exportar alunos em PDF
+GET {{baseUrl}}/reports/students/export/pdf
+Authorization: Bearer {{accessToken}}
+
+### Exportar professores em PDF
+GET {{baseUrl}}/reports/professors/export/pdf
+Authorization: Bearer {{accessToken}}
+
+###############################################################################
+# EXEMPLOS DE ERRO E SEGURANÇA
+###############################################################################
+
+### Rota protegida sem token — esperado 401
+GET {{baseUrl}}/dashboard
+
+### Token inválido — esperado 401
+GET {{baseUrl}}/users/me
+Authorization: Bearer token-invalido
+
+### Recurso inexistente — esperado 404
+GET {{baseUrl}}/courses/999999999
+Authorization: Bearer {{accessToken}}
+
+### Rota inexistente — esperado 404
+GET {{baseUrl}}/rota-inexistente

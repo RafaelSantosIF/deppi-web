@@ -1,36 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DEPPI Web
 
-## Getting Started
+Primeira versão da plataforma de extensão do IFCE, construída com Next.js 16. Inclui autenticação, cadastro público de alunos, início por permissões, perfil e navegação responsiva.
 
-First, run the development server:
+## Executar
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Instale as dependências com `npm install`.
+2. Copie `.env.example` para `.env.local` e preencha `DEPPI_SESSION_SECRET` com uma chave aleatória de pelo menos 32 caracteres.
+3. Inicie com `npm run dev` e abra `http://localhost:3000`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`DEPPI_API_URL` aponta por padrão para `https://deppi-api.onrender.com`. Todas as chamadas da interface passam pelo servidor Next.js; os tokens ficam em um cookie criptografado `HttpOnly`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Rotas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/login`: autenticação de alunos e funcionários já cadastrados.
+- `/cadastro`: cadastro público exclusivo para alunos.
+- `/inicio`: painel conforme as permissões da conta.
+- `/perfil`: consulta e autogestão de dados, endereço, foto e senha.
+- `/403`: aviso de acesso negado.
 
-## Learn More
+Os outros módulos aparecem como “Em breve” apenas para usuários com permissão.
 
-To learn more about Next.js, take a look at the following resources:
+## Verificação
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`npm run lint`, `npm run test` e `npm run build`.
