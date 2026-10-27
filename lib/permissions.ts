@@ -72,8 +72,8 @@ export const navigation: NavigationItem[] = [
   {
     label: "Usuários",
     icon: "group",
+    href: "/usuarios",
     permissions: ["manage-users"],
-    comingSoon: true,
   },
   {
     label: "Instituições",
@@ -90,8 +90,8 @@ export const navigation: NavigationItem[] = [
   {
     label: "Permissões",
     icon: "admin_panel_settings",
+    href: "/permissoes",
     permissions: ["manage-permissions"],
-    comingSoon: true,
   },
   { label: "Perfil", icon: "person", href: "/perfil" },
 ];

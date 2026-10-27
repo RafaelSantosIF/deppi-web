@@ -79,3 +79,27 @@ export type EnrollmentSummary = {
   documents: { id: string }[];
   course: { id: number; title: string; status: string };
 };
+
+export type PermissionRecord = {
+  id: number;
+  name: string;
+  slug?: string;
+  description?: string;
+};
+
+export type RoleRecord = {
+  id: number;
+  name: string;
+  permissions: PermissionRecord[];
+};
+
+export type ManagedUser = {
+  id: number;
+  name: string;
+  email: string;
+  personalEmail?: string | null;
+  institutionalPhones?: string[];
+  personalPhones?: string[];
+  role: { id: number; name: string } | string;
+};
+

@@ -19,7 +19,14 @@ export function AppShell({
   const [busy, setBusy] = useState(false);
   const path = usePathname();
   const router = useRouter();
-  const current = path === "/perfil" ? "Perfil" : "Início";
+  const current =
+    path === "/perfil"
+      ? "Perfil"
+      : path === "/permissoes"
+        ? "Permissões"
+        : path === "/usuarios"
+          ? "Usuários"
+          : "Início";
 
   async function logout() {
     setBusy(true);
