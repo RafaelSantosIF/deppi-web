@@ -4,6 +4,45 @@ import { FormEvent, useMemo, useState } from "react";
 import { Alert, EmptyState, Icon } from "./ui";
 import type { PermissionRecord, RoleRecord } from "@/lib/types";
 
+function validId(value: unknown): number | null {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) return value;
+  if (typeof value === "string" && /^\d+$/.test(value)) return Number(value);
+  return null;
+}
+
+function normalizePermission(raw: unknown, available: PermissionRecord[]): PermissionRecord | null {
+  if (!raw) return null;
+
+  if (typeof raw === "number" || typeof raw === "string") {
+    const id = validId(raw);
+    if (id === null) return null;
+    return available.find((permission) => permission.id === id) ?? { id, name: "Permissão" };
+  }
+
+  if (typeof raw !== "object") return null;
+  const item = raw as Record<string, unknown>;
+
+  for (const key of ["permission", "data"])
+    if (item[key] && typeof item[key] === "object") {
+      const nested = normalizePermission(item[key], available);
+      if (nested) return nested;
+    }
+
+  const id = validId(item.id ?? item.permissionId);
+  if (id === null) return null;
+  const known = available.find((permission) => permission.id === id);
+  return {
+    id,
+    name: typeof item.name === "string"
+      ? item.name
+      : typeof item.slug === "string"
+        ? item.slug
+        : known?.name ?? "Permissão",
+    slug: typeof item.slug === "string" ? item.slug : known?.slug,
+    description: typeof item.description === "string" ? item.description : known?.description,
+  };
+}
+
 function normalize(data: unknown): { roles: RoleRecord[]; permissions: PermissionRecord[] } {
   const root = data && typeof data === "object" ? (data as Record<string, unknown>) : {};
   const rolesValue = Array.isArray(data)
@@ -11,44 +50,39 @@ function normalize(data: unknown): { roles: RoleRecord[]; permissions: Permissio
     : Array.isArray(root.roles)
       ? root.roles
       : [];
-  const permissionsValue = Array.isArray(root.permissions) ? root.permissions : [];
+  const permissionsValue = Array.isArray(root.permissions)
+    ? root.permissions
+    : Array.isArray(root.availablePermissions)
+      ? root.availablePermissions
+      : [];
 
-  const roles: RoleRecord[] = rolesValue.map((raw) => {
-    const role = raw as Record<string, unknown>;
-    const rolePermissions = Array.isArray(role.permissions) ? role.permissions : [];
-    const normalizedPermissions = rolePermissions
-      .map((permission) =>
-        typeof permission === "number"
-          ? permissionsValue.find((item) => (item as Record<string, unknown>).id === permission)
-          : typeof permission === "object" && permission
-            ? permission
-            : null,
-      )
-      .filter((permission): permission is PermissionRecord => Boolean(permission)) as PermissionRecord[];
-    return {
-      id: Number(role.id),
-      name: typeof role.name === "string" ? role.name : "Cargo sem nome",
-      permissions: normalizedPermissions.map((permission) => {
-        const item = permission as unknown as Record<string, unknown>;
-        return {
-          id: Number(item.id),
-          name: typeof item.name === "string" ? item.name : String(item.slug ?? "Permissão"),
-          slug: typeof item.slug === "string" ? item.slug : undefined,
-          description: typeof item.description === "string" ? item.description : undefined,
-        };
-      }),
-    };
-  });
+  const permissions: PermissionRecord[] = permissionsValue
+    .map((raw) => normalizePermission(raw, []))
+    .filter((permission): permission is PermissionRecord => permission !== null);
 
-  const permissions: PermissionRecord[] = permissionsValue.map((raw) => {
-    const item = raw as Record<string, unknown>;
-    return {
-      id: Number(item.id),
-      name: typeof item.name === "string" ? item.name : String(item.slug ?? "Permissão"),
-      slug: typeof item.slug === "string" ? item.slug : undefined,
-      description: typeof item.description === "string" ? item.description : undefined,
-    };
-  });
+  const roles: RoleRecord[] = rolesValue
+    .map((raw) => {
+      const role = raw as Record<string, unknown>;
+      const rolePermissions = Array.isArray(role.permissions)
+        ? role.permissions
+        : Array.isArray(role.permissionIds)
+          ? role.permissionIds
+          : [];
+      const normalizedPermissions = rolePermissions
+        .map((permission) => normalizePermission(permission, permissions))
+        .filter((permission): permission is PermissionRecord => permission !== null);
+
+      const uniquePermissions = [
+        ...new Map(normalizedPermissions.map((permission) => [permission.id, permission])).values(),
+      ];
+      const id = validId(role.id);
+      return {
+        id: id ?? 0,
+        name: typeof role.name === "string" ? role.name : "Cargo sem nome",
+        permissions: uniquePermissions,
+      };
+    })
+    .filter((role) => role.id > 0);
 
   if (!permissions.length) {
     const known = new Map<number, PermissionRecord>();
@@ -117,8 +151,11 @@ export function RolesPermissions({ initialData, initialError = false }: { initia
     setError("");
     try {
       const permissionIds = checked
-        ? [...new Set([...selectedRole.permissions.map((item) => item.id), permissionId])]
-        : selectedRole.permissions.filter((item) => item.id !== permissionId).map((item) => item.id);
+        ? [...new Set([...selectedRole.permissions.map((item) => item.id), permissionId].filter((id) => Number.isInteger(id) && id > 0))]
+        : selectedRole.permissions
+            .filter((item) => item.id !== permissionId)
+            .map((item) => item.id)
+            .filter((id) => Number.isInteger(id) && id > 0);
       const response = await fetch(`/api/roles/${selectedRole.id}/permissions`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
