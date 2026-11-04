@@ -26,6 +26,8 @@ export function AppShell({
         ? "Permissões"
         : path === "/usuarios"
           ? "Usuários"
+          : path === "/instituicoes"
+            ? "Instituições"
           : "Início";
 
   async function logout() {

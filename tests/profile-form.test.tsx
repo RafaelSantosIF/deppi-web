@@ -74,6 +74,7 @@ describe("autogestão do perfil", () => {
         .mockResolvedValue({ ok: true, json: async () => ({ success: true }) }),
     );
     render(<ProfileForms profile={profile} />);
+    fireEvent.click(screen.getByRole("button", { name: "Recuperar senha" }));
     fireEvent.change(screen.getByLabelText("Senha atual"), {
       target: { value: "senhaAntiga123" },
     });
@@ -110,12 +111,11 @@ describe("autogestão do perfil", () => {
     vi.stubGlobal("fetch", fetchMock);
     render(<ProfileForms profile={profile} />);
     const file = new File(["image"], "foto.png", { type: "image/png" });
-    fireEvent.change(screen.getByLabelText("Escolher imagem"), {
+    fireEvent.click(screen.getByRole("button", { name: "Editar foto do perfil" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Atualizar foto" }));
+    fireEvent.change(screen.getByLabelText("Selecionar foto"), {
       target: { files: [file] },
     });
-    fireEvent.submit(
-      screen.getByRole("button", { name: "Enviar foto" }).closest("form")!,
-    );
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(fetchMock.mock.calls[0][0]).toBe("/api/profile/photo");
     expect(fetchMock.mock.calls[0][1].body.get("photo")).toBe(file);

@@ -55,7 +55,13 @@ export async function POST(request: Request) {
   }
   try {
     const outgoing = new FormData();
-    outgoing.set("photo", photo);
+    const bytes = await photo.arrayBuffer();
+    const filename = photo.name || "profile-photo";
+    outgoing.set(
+      "photo",
+      new Blob([bytes], { type: photo.type }),
+      filename,
+    );
     await authorizedRequest(`/users/${session.user.id}/photo`, {
       method: "POST",
       body: outgoing,

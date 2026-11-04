@@ -58,6 +58,9 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [creating, setCreating] = useState(false);
+  const [resetting, setResetting] = useState<ManagedUser | null>(null);
+  const [resetPassword, setResetPassword] = useState("");
+  const [resetConfirmation, setResetConfirmation] = useState("");
   const [form, setForm] = useState({ name: "", email: "", personalEmail: "", password: "", roleId: "", personalPhones: "", institutionalPhones: "" });
 
   const visibleUsers = useMemo(() => users.filter((user) => {
@@ -160,14 +163,45 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
     }
   }
 
+  async function submitPasswordReset(event: FormEvent) {
+    event.preventDefault();
+    if (!resetting) return;
+    if (resetPassword.length < 8 || resetPassword !== resetConfirmation) {
+      setError("A nova senha deve ter ao menos 8 caracteres e coincidir com a confirmação.");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/users/${resetting.id}/password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: resetting.email,
+          newPassword: resetPassword,
+          confirmPassword: resetConfirmation,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok || !body.success) throw new Error(body.error ?? "Não foi possível redefinir a senha.");
+      setSuccess(`Senha de ${resetting.name} redefinida com sucesso.`);
+      setResetting(null);
+      setResetPassword("");
+      setResetConfirmation("");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Não foi possível redefinir a senha.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const modalOpen = creating || editing !== null;
 
   return (
     <>
       <div className="page-header users-header">
         <div>
-          <h1>Usuários</h1>
-          <p>Cadastre pessoas, mantenha seus dados e defina seus cargos.</p>
+          <h1>Usuários</h1>          
         </div>
         <button className="button button-primary" onClick={openCreate}><Icon name="group" size={16} /> Novo usuário</button>
       </div>
@@ -198,7 +232,7 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
                     <td><span className="user-name-cell"><Avatar name={user.name} /><strong>{user.name}</strong></span></td>
                     <td>{user.email}</td>
                     <td><span className="role-chip">{roleName(user) || "Sem cargo"}</span></td>
-                    <td><div className="user-row-actions"><button className="button button-secondary" onClick={() => openEdit(user)}>Editar</button><button className="icon-button delete-role" onClick={() => deleteUser(user)} disabled={busy} aria-label={`Excluir ${user.name}`} title="Excluir usuário">×</button></div></td>
+                    <td><div className="user-row-actions"><button className="button button-secondary" onClick={() => openEdit(user)}>Editar</button><button className="icon-button" onClick={() => { setResetting(user); setResetPassword(""); setResetConfirmation(""); }} disabled={busy} aria-label={`Redefinir senha de ${user.name}`} title="Redefinir senha"><Icon name="lock" size={17} /></button><button className="icon-button delete-role" onClick={() => deleteUser(user)} disabled={busy} aria-label={`Excluir ${user.name}`} title="Excluir usuário">×</button></div></td>
                   </tr>
                 ))}
               </tbody>
@@ -221,6 +255,38 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
               <div className="field"><label htmlFor="institution-phones">Telefones institucionais</label><input id="institution-phones" className="input" value={form.institutionalPhones} onChange={(event) => setForm({ ...form, institutionalPhones: event.target.value })} placeholder="Separe por vírgula" /></div>
             </div>
             <div className="role-modal-actions"><button type="button" className="button button-secondary" onClick={() => { setCreating(false); setEditing(null); }}>Cancelar</button><button className="button button-primary" disabled={busy}>{busy ? "Salvando..." : "Salvar usuário"}</button></div>
+          </form>
+        </div>
+      )}
+
+      {resetting && (
+        <div
+          className="role-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setResetting(null);
+          }}
+        >
+          <form className="role-modal card" onSubmit={submitPasswordReset}>
+            <div className="role-modal-head">
+              <h2>Redefinir senha</h2>
+              <button type="button" className="icon-button" onClick={() => setResetting(null)} aria-label="Fechar">×</button>
+            </div>
+            <p className="field-note">{resetting.name}</p>
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="reset-password">Nova senha</label>
+                <input id="reset-password" className="input" type="password" autoComplete="new-password" minLength={8} value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} required />
+              </div>
+              <div className="field">
+                <label htmlFor="reset-confirmation">Confirmar nova senha</label>
+                <input id="reset-confirmation" className="input" type="password" autoComplete="new-password" value={resetConfirmation} onChange={(event) => setResetConfirmation(event.target.value)} required />
+              </div>
+            </div>
+            <div className="role-modal-actions">
+              <button type="button" className="button button-secondary" onClick={() => setResetting(null)}>Cancelar</button>
+              <button className="button button-primary" disabled={busy}>{busy ? "Redefinindo..." : "Redefinir senha"}</button>
+            </div>
           </form>
         </div>
       )}

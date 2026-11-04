@@ -945,6 +945,64 @@ h2 {
   color: var(--muted);
   font-size: 12px;
 }
+.profile-avatar-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+.profile-avatar-edit {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+}
+.profile-avatar-edit:hover {
+  background: var(--accent);
+}
+.profile-context-menu {
+  position: absolute;
+  top: 30px;
+  left: 54px;
+  z-index: 20;
+  min-width: 150px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+.profile-context-menu button {
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.profile-context-menu button:hover {
+  background: var(--surface-2);
+}
+.profile-password-action {
+  width: 100%;
+  margin-top: 2px;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .profile-detail small {
   color: var(--muted);
   display: block;
@@ -1074,6 +1132,28 @@ h2 {
 }
 .user-modal {
   width: min(680px, 100%);
+}
+.institutions-toolbar {
+  grid-template-columns: minmax(220px, 360px) 180px;
+}
+.institution-name {
+  min-width: 220px;
+  display: grid;
+  gap: 2px;
+}
+.institution-name small {
+  color: var(--muted);
+}
+.institution-actions {
+  flex-wrap: nowrap;
+  min-width: 190px;
+}
+.institution-actions .button {
+  min-height: 36px;
+  padding-inline: 10px;
+}
+.field-span-2 {
+  grid-column: span 2;
 }
 .permissions-header {
   display: flex;
@@ -1387,6 +1467,9 @@ h2 {
   .course-grid,
   .field-grid {
     grid-template-columns: 1fr;
+  }
+  .field-span-2 {
+    grid-column: span 1;
   }
   .topbar-user strong {
     max-width: 110px;

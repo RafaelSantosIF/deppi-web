@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UserProfile } from "@/lib/types";
-import { Alert, Avatar } from "./ui";
+import { Alert, Avatar, Icon } from "./ui";
 
 async function send(path: string, method: string, body?: BodyInit) {
   const response = await fetch(path, {
@@ -62,6 +62,9 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [photo, setPhoto] = useState(Boolean(profile.photoId));
   const [photoVersion, setPhotoVersion] = useState(0);
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState("");
   const [feedback, setFeedback] = useState<{
     tone: "error" | "success";
@@ -122,19 +125,14 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
     });
   }
 
-  async function uploadPhoto(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const input = event.currentTarget.elements.namedItem(
-      "photo",
-    ) as HTMLInputElement;
-    if (!input.files?.[0]) return;
+  async function uploadPhoto(file: File) {
     await run("photo", async () => {
       const form = new FormData();
-      form.set("photo", input.files![0]);
+      form.set("photo", file);
       await send("/api/profile/photo", "POST", form);
       setPhoto(true);
       setPhotoVersion((value) => value + 1);
-      input.value = "";
+      setPhotoMenuOpen(false);
     });
   }
 
@@ -162,6 +160,7 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
         "PATCH",
         JSON.stringify({ currentPassword, newPassword, confirmPassword }),
       );
+      setPasswordModalOpen(false);
       router.replace("/login?password=1");
       router.refresh();
     } catch (cause) {
@@ -185,14 +184,56 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
     <div className="profile-grid">
       <aside className="card card-pad profile-summary">
         <div className="profile-summary-head">
-          <span key={photoVersion}>
+          <span className="profile-avatar-wrap" key={photoVersion}>
             <Avatar name={profile.name} photo={photo} large />
+            <button
+              type="button"
+              className="profile-avatar-edit icon-button"
+              onClick={() => setPhotoMenuOpen((open) => !open)}
+              aria-label="Editar foto do perfil"
+              aria-expanded={photoMenuOpen}
+            >
+              <Icon name="edit" size={14} />
+            </button>
+            {photoMenuOpen && (
+              <div className="profile-context-menu" role="menu">
+                {photo && (
+                  <button type="button" role="menuitem" onClick={removePhoto}>
+                    Remover foto
+                  </button>
+                )}
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    photoInputRef.current?.click();
+                    setPhotoMenuOpen(false);
+                  }}
+                >
+                  Atualizar foto
+                </button>
+              </div>
+            )}
           </span>
           <span>
             <strong>{profile.name}</strong>
             <small>{profile.email}</small>
           </span>
         </div>
+        <input
+          ref={photoInputRef}
+          className="visually-hidden"
+          id="photo"
+          name="photo"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          aria-label="Selecionar foto"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void uploadPhoto(file);
+            event.target.value = "";
+          }}
+        />
         <div className="profile-detail">
           <small>Cargo</small>
           <strong>{profile.role.name}</strong>
@@ -210,6 +251,14 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
               <strong>{profile.personalData.fullName}</strong>
             </div>
           )}
+        <button
+          type="button"
+          className="button button-secondary profile-password-action"
+          onClick={() => setPasswordModalOpen(true)}
+        >
+          <Icon name="lock" size={16} />
+          Recuperar senha
+        </button>
       </aside>
       <div className="profile-forms">
         {feedback && <Alert tone={feedback.tone}>{feedback.text}</Alert>}
@@ -303,84 +352,50 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
             </div>
           </form>
         )}
-        <form className="card card-pad profile-form" onSubmit={uploadPhoto}>
-          <h2>Foto do perfil</h2>
-          <div className="field">
-            <label htmlFor="photo">Escolher imagem</label>
-            <input
-              className="input"
-              id="photo"
-              name="photo"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              required
-            />
-            <span className="field-note">JPEG, PNG ou WebP. Até 3 MB.</span>
-          </div>
-          <div className="photo-actions">
-            <button className="button button-primary" disabled={Boolean(busy)}>
-              {busy === "photo" ? "Enviando..." : "Enviar foto"}
-            </button>
-            {photo && (
+      </div>
+      {passwordModalOpen && (
+        <div
+          className="role-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.currentTarget === event.target) setPasswordModalOpen(false);
+          }}
+        >
+          <form className="role-modal card" onSubmit={savePassword}>
+            <div className="role-modal-head">
+              <h2>Recuperar senha</h2>
               <button
                 type="button"
-                className="button button-secondary"
-                onClick={removePhoto}
-                disabled={Boolean(busy)}
+                className="icon-button"
+                onClick={() => setPasswordModalOpen(false)}
+                aria-label="Fechar"
               >
-                Remover foto
+                ×
               </button>
-            )}
-          </div>
-        </form>
-        <form className="card card-pad profile-form" onSubmit={savePassword}>
-          <h2>Trocar senha</h2>
-          <div className="field">
-            <label htmlFor="current-password">Senha atual</label>
-            <input
-              className="input"
-              id="current-password"
-              type="password"
-              autoComplete="current-password"
-              value={currentPassword}
-              onChange={(event) => setCurrentPassword(event.target.value)}
-              required
-            />
-          </div>
-          <div className="field-grid">
-            <div className="field">
-              <label htmlFor="new-password">Nova senha</label>
-              <input
-                className="input"
-                id="new-password"
-                type="password"
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                minLength={8}
-                required
-              />              
             </div>
             <div className="field">
-              <label htmlFor="confirm-password">Confirmar nova senha</label>
-              <input
-                className="input"
-                id="confirm-password"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                required
-              />
+              <label htmlFor="current-password">Senha atual</label>
+              <input className="input" id="current-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required />
             </div>
-          </div>
-          <div className="form-actions">
-            <button className="button button-primary" disabled={Boolean(busy)}>
-              {busy === "password" ? "Alterando..." : "Alterar senha"}
-            </button>
-          </div>
-        </form>
-      </div>
+            <div className="field-grid">
+              <div className="field">
+                <label htmlFor="new-password">Nova senha</label>
+                <input className="input" id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={8} required />
+              </div>
+              <div className="field">
+                <label htmlFor="confirm-password">Confirmar nova senha</label>
+                <input className="input" id="confirm-password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required />
+              </div>
+            </div>
+            <div className="role-modal-actions">
+              <button type="button" className="button button-secondary" onClick={() => setPasswordModalOpen(false)}>Cancelar</button>
+              <button className="button button-primary" disabled={Boolean(busy)}>
+                {busy === "password" ? "Alterando..." : "Alterar senha"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

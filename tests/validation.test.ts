@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validCpf, validEmail } from "@/lib/validation";
+import { formatCnpj, validCpf, validEmail } from "@/lib/validation";
 
 describe("validação do cadastro", () => {
   it("aceita CPF válido com ou sem pontuação", () => {
@@ -15,5 +15,10 @@ describe("validação do cadastro", () => {
   it("valida o formato básico de e-mail", () => {
     expect(validEmail("aluna@ifce.edu.br")).toBe(true);
     expect(validEmail("sem-arroba")).toBe(false);
+  });
+
+  it("formata CNPJ enquanto os dígitos são informados", () => {
+    expect(formatCnpj("12345678000190")).toBe("12.345.678/0001-90");
+    expect(formatCnpj("12.345.678/0001-90")).toBe("12.345.678/0001-90");
   });
 });

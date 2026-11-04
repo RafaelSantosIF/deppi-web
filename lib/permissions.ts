@@ -78,8 +78,8 @@ export const navigation: NavigationItem[] = [
   {
     label: "Instituições",
     icon: "apartment",
+    href: "/instituicoes",
     permissions: ["manage-institutions"],
-    comingSoon: true,
   },
   {
     label: "Relatórios",

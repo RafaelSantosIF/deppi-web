@@ -10,8 +10,21 @@ import { EmptyState, Icon, StatusBadge } from "@/components/ui";
 
 const numberFormatter = new Intl.NumberFormat("pt-BR");
 
-function formatTotal(value: number | undefined) {
-  return value === undefined ? "—" : numberFormatter.format(value);
+function formatTotal(value: number | null | undefined) {
+  return typeof value !== "number" || !Number.isFinite(value)
+    ? "—"
+    : numberFormatter.format(value);
+}
+
+function institutionCount(data: unknown) {
+  if (typeof data === "number") return data;
+  if (!data || typeof data !== "object") return undefined;
+  const record = data as Record<string, unknown>;
+  for (const key of ["count", "total", "totalInstitutions"]) {
+    const value = record[key];
+    if (typeof value === "number") return value;
+  }
+  return undefined;
 }
 
 function roleTotal(data: DashboardData, role: string) {
@@ -43,8 +56,18 @@ function greeting() {
 
 async function loadDashboard() {
   try {
+    const [dashboard, institutionCountData] = await Promise.all([
+      pageRequest<DashboardData>("/dashboard", "/inicio"),
+      pageRequest<unknown>("/institutions/count", "/inicio").catch(() => undefined),
+    ]);
+    const totalInstitutions = institutionCount(institutionCountData);
     return {
-      data: await pageRequest<DashboardData>("/dashboard", "/inicio"),
+      data: totalInstitutions === undefined
+        ? dashboard
+        : {
+            ...dashboard,
+            summary: { ...dashboard.summary, totalInstitutions },
+          },
       error: false,
     };
   } catch (error) {

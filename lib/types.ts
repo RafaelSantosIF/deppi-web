@@ -38,7 +38,7 @@ export type DashboardData = {
     activeCourses: number;
     finishedCourses: number;
     totalEnrollments?: number;
-    totalInstitutions: number;
+    totalInstitutions?: number | null;
     remainingVacancies?: number;
   };
   charts: {
@@ -103,3 +103,13 @@ export type ManagedUser = {
   role: { id: number; name: string } | string;
 };
 
+export type Institution = {
+  id: number;
+  name: string;
+  cnpj: string;
+  acronym?: string | null;
+  city?: string | null;
+  state?: string | null;
+  active: boolean;
+  _count?: { departments: number };
+};
