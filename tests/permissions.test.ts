@@ -21,8 +21,15 @@ describe("navegação por permissões", () => {
         "Visualizar Cursos",
         "view-courses",
         "Visualizar Perfil",
+        "Criar Curso",
+        "Editar Curso Próprio",
       ]),
-    ).toEqual(["view-courses", "view-profile"]);
+    ).toEqual([
+      "view-courses",
+      "view-profile",
+      "create-course",
+      "edit-own-course",
+    ]);
   });
 
   it("mostra somente os módulos autorizados para aluno", () => {
@@ -35,8 +42,8 @@ describe("navegação por permissões", () => {
       "Minhas inscrições",
       "Perfil",
     ]);
-    expect(items.find((item) => item.label === "Cursos")?.comingSoon).toBe(
-      true,
+    expect(items.find((item) => item.label === "Cursos")?.href).toBe(
+      "/cursos",
     );
     expect(can(user(["view-courses"]), "view-dashboard")).toBe(false);
   });

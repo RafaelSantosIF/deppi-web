@@ -90,7 +90,7 @@ describe("Início por permissão", () => {
     const html = renderToStaticMarkup(await HomePage());
     expect(html).toContain("Introdução a Python");
     expect(html).toContain("Minhas inscrições");
-    expect(html).toContain("Aprovado");
+    expect(html).toContain("Deferida");
   });
 
   it("mostra estado genérico sem buscar dados não autorizados", async () => {

@@ -341,7 +341,7 @@ function StudentHome({
           enrollments.slice(0, 5).map((item) => (
             <div className="list-row" key={item.id}>
               <strong>{item.course.title}</strong>
-              <StatusBadge status={item.status} />
+              <StatusBadge status={item.status} kind="enrollment" />
             </div>
           ))
         ) : (

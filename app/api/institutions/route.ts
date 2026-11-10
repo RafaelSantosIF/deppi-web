@@ -1,9 +1,14 @@
 import { apiErrorResponse } from "@/lib/api";
 import { authorizedRequest } from "@/lib/session";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const search = new URL(request.url).searchParams;
+  const query = search.get("active") === "true" ? "?active=true" : "";
   try {
-    return Response.json({ success: true, data: await authorizedRequest<unknown>("/institutions") });
+    return Response.json({
+      success: true,
+      data: await authorizedRequest<unknown>(`/institutions${query}`),
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

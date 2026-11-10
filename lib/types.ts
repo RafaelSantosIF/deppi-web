@@ -69,8 +69,31 @@ export type CourseSummary = {
   startDate: string;
   endDateEstimated: string;
   executionHours: number;
+  minBeneficiaries?: number;
   maxBeneficiaries: number;
-  _count?: { teamMembers: number };
+  thematicArea?: string;
+  extensionLine?: string;
+  responsibleId?: number;
+  responsible?: { id: number; name: string; email?: string } | null;
+  institutionId?: number;
+  institution?: {
+    id?: number;
+    name?: string;
+    acronym?: string | null;
+    city?: string | null;
+  } | null;
+  location?: string;
+  funding?: string;
+  institutionalProgram?: string;
+  offerModel?: string;
+  coverageMunicipalities?: string[];
+  evaluationMethods?: string[];
+  disclosureMethods?: string[];
+  activitiesPerformed?: string;
+  coverUrl?: string | null;
+  enrolled?: number;
+  enrollmentsCount?: number;
+  _count?: { teamMembers?: number; enrollments?: number };
 };
 
 export type EnrollmentSummary = {
@@ -101,6 +124,13 @@ export type ManagedUser = {
   institutionalPhones?: string[];
   personalPhones?: string[];
   role: { id: number; name: string } | string;
+};
+
+export type CourseProfessor = {
+  id: number;
+  name: string;
+  email: string;
+  active: boolean;
 };
 
 export type Institution = {

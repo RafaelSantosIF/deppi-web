@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { Alert, EmptyState, Icon } from "./ui";
+import { normalizeInstitutions } from "@/lib/institutions";
 import type { Institution } from "@/lib/types";
 import { formatCnpj } from "@/lib/validation";
 
@@ -10,31 +11,6 @@ const BRAZILIAN_STATES = [
   "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
   "RS", "RO", "RR", "SC", "SP", "SE", "TO",
 ] as const;
-
-function normalizeInstitutions(data: unknown): Institution[] {
-  const root = data && typeof data === "object" ? data as Record<string, unknown> : {};
-  const source = Array.isArray(data)
-    ? data
-    : Array.isArray(root.institutions)
-      ? root.institutions
-      : [];
-  return source.map((raw) => {
-    const item = raw as Record<string, unknown>;
-    const count = item._count && typeof item._count === "object"
-      ? (item._count as Record<string, unknown>).departments
-      : undefined;
-    return {
-      id: Number(item.id),
-      name: String(item.name ?? "Instituição"),
-      cnpj: String(item.cnpj ?? ""),
-      acronym: typeof item.acronym === "string" ? item.acronym : null,
-      city: typeof item.city === "string" ? item.city : null,
-      state: typeof item.state === "string" ? item.state : null,
-      active: item.active !== false,
-      _count: typeof count === "number" ? { departments: count } : undefined,
-    };
-  });
-}
 
 export function InstitutionsManagement({
   initialInstitutions,

@@ -28,7 +28,9 @@ export function AppShell({
           ? "Usuários"
           : path === "/instituicoes"
             ? "Instituições"
-          : "Início";
+            : path === "/cursos" || path.startsWith("/cursos/")
+              ? "Cursos"
+              : "Início";
 
   async function logout() {
     setBusy(true);
@@ -70,8 +72,8 @@ export function AppShell({
                 key={item.label}
                 href={item.href!}
                 onClick={() => setOpen(false)}
-                className={`nav-item ${path === item.href ? "nav-active" : ""}`}
-                aria-current={path === item.href ? "page" : undefined}
+                className={`nav-item ${path === item.href || (item.href === "/cursos" && path.startsWith("/cursos/")) ? "nav-active" : ""}`}
+                aria-current={path === item.href || (item.href === "/cursos" && path.startsWith("/cursos/")) ? "page" : undefined}
                 aria-label={item.label}
               >
                 <Icon name={item.icon} />

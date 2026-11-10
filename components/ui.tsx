@@ -80,6 +80,35 @@ const paths: Record<string, ReactNode> = {
       <path d="M7 3v4M17 3v4M3 10h18" />
     </>
   ),
+  hourglass: (
+    <>
+      <path d="M6 3h12M6 21h12M7 3c0 5 5 5 5 9s-5 4-5 9M17 3c0 5-5 5-5 9s5 4 5 9" />
+    </>
+  ),
+  check_circle: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m8 12 2.5 2.5L16 9" />
+    </>
+  ),
+  close_circle: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m9 9 6 6m0-6-6 6" />
+    </>
+  ),
+  block: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m6 6 12 12" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="10.8" cy="10.8" r="6.8" />
+      <path d="m16 16 4.5 4.5" />
+    </>
+  ),
   edit: (
     <>
       <path d="m3 21 3.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11zM13 7l3 3" />
@@ -190,20 +219,43 @@ export function EmptyState({
   );
 }
 
-export function StatusBadge({ status }: { status: string }) {
-  const label: Record<string, string> = {
-    PUBLISHED: "Publicado",
-    APPROVED: "Aprovado",
+export function StatusBadge({
+  status,
+  kind = "course",
+}: {
+  status: string;
+  kind?: "course" | "enrollment";
+}) {
+  const statusLabels: Record<string, { label: string; icon: string }> = {
+    DRAFT: { label: "Rascunho", icon: "edit" },
+    PUBLISHED: { label: "Em andamento", icon: "check_circle" },
+    APPROVED: { label: "Aprovado", icon: "check_circle" },
+    PENDING: { label: "Pendente", icon: "hourglass" },
+    PENDING_APPROVAL: { label: "Em análise", icon: "hourglass" },
+    CLOSED: { label: "Fechado", icon: "lock" },
+    REJECTED: { label: "Indeferido", icon: "close_circle" },
+    CANCELLED: { label: "Cancelado", icon: "block" },
+    WAITLISTED: { label: "Lista de espera", icon: "list_alt" },
+    COMPLETED: { label: "Concluído", icon: "check_circle" },
+  };
+  const enrollmentLabels: Record<string, string> = {
     PENDING: "Pendente",
-    PENDING_APPROVAL: "Em análise",
-    CLOSED: "Encerrado",
-    REJECTED: "Indeferido",
-    CANCELLED: "Cancelado",
+    APPROVED: "Deferida",
+    REJECTED: "Indeferida",
+    CANCELLED: "Cancelada",
     WAITLISTED: "Lista de espera",
   };
+  const configuration = statusLabels[status];
+  const label =
+    kind === "enrollment"
+      ? enrollmentLabels[status] ?? configuration?.label ?? status
+      : configuration?.label ?? status;
   return (
-    <span className={`badge badge-${status.toLowerCase().replace(/_/g, "-")}`}>
-      {label[status] ?? status}
+    <span
+      className={`badge badge-${status.toLowerCase().replace(/_/g, "-")} badge-${kind}`}
+    >
+      <Icon name={configuration?.icon ?? "warning"} size={12} />
+      {label}
     </span>
   );
 }
