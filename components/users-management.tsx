@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import { Alert, Avatar, EmptyState, Icon } from "./ui";
+import { Alert, Avatar, EmptyState, Icon, RoleBadge } from "./ui";
 import type { ManagedUser, RoleRecord } from "@/lib/types";
 
 function arrayValue(value: unknown) {
@@ -231,7 +231,7 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
                   <tr key={user.id}>
                     <td><span className="user-name-cell"><Avatar name={user.name} /><strong>{user.name}</strong></span></td>
                     <td>{user.email}</td>
-                    <td><span className="role-chip">{roleName(user) || "Sem cargo"}</span></td>
+                    <td><RoleBadge name={roleName(user) || "Sem cargo"} /></td>
                     <td><div className="user-row-actions"><button className="button button-secondary" onClick={() => openEdit(user)}>Editar</button><button className="icon-button" onClick={() => { setResetting(user); setResetPassword(""); setResetConfirmation(""); }} disabled={busy} aria-label={`Redefinir senha de ${user.name}`} title="Redefinir senha"><Icon name="lock" size={17} /></button><button className="icon-button delete-role" onClick={() => deleteUser(user)} disabled={busy} aria-label={`Excluir ${user.name}`} title="Excluir usuário">×</button></div></td>
                   </tr>
                 ))}

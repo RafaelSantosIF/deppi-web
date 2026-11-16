@@ -227,7 +227,7 @@ export function CoursesManagement({
                         {formatCourseDate(course.startDate)} – {formatCourseDate(course.endDateEstimated)}
                       </span>
                       <span>
-                        <Icon name="calendar" size={13} />
+                        <Icon name="schedule" size={13} />
                         {formatCourseTime(course.startDate)}–{formatCourseTime(course.endDateEstimated)}
                       </span>
                       <span>

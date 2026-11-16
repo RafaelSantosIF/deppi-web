@@ -203,7 +203,7 @@ export function CourseDetails({
               <span><small>Período</small><strong>{formatDate(course.startDate)} a {formatDate(course.endDateEstimated)}</strong></span>
             </div>
             <div className="course-fact">
-              <Icon name="calendar" />
+              <Icon name="schedule" />
               <span><small>Horário</small><strong>{formatTime(course.startDate)} às {formatTime(course.endDateEstimated)}</strong></span>
             </div>
             <div className="course-fact">

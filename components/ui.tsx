@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Image from "next/image";
 
 const paths: Record<string, ReactNode> = {
@@ -80,6 +80,12 @@ const paths: Record<string, ReactNode> = {
       <path d="M7 3v4M17 3v4M3 10h18" />
     </>
   ),
+  schedule: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </>
+  ),
   hourglass: (
     <>
       <path d="M6 3h12M6 21h12M7 3c0 5 5 5 5 9s-5 4-5 9M17 3c0 5-5 5-5 9s5 4 5 9" />
@@ -137,6 +143,23 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     >
       {paths[name] ?? paths.warning}
     </svg>
+  );
+}
+
+function roleHue(name: string) {
+  let hash = 0;
+  for (const character of name.trim().toLocaleLowerCase("pt-BR")) {
+    hash = (hash * 31 + (character.codePointAt(0) ?? 0)) % 360;
+  }
+  return hash;
+}
+
+export function RoleBadge({ name }: { name: string }) {
+  const style = { "--role-hue": roleHue(name) } as CSSProperties;
+  return (
+    <span className="role-chip" style={style}>
+      {name}
+    </span>
   );
 }
 

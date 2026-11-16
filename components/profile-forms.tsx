@@ -3,7 +3,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UserProfile } from "@/lib/types";
-import { Alert, Avatar, Icon } from "./ui";
+import { Alert, Avatar, Icon, RoleBadge } from "./ui";
 
 async function send(path: string, method: string, body?: BodyInit) {
   const response = await fetch(path, {
@@ -236,7 +236,7 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
         />
         <div className="profile-detail">
           <small>Cargo</small>
-          <strong>{profile.role.name}</strong>
+          <RoleBadge name={profile.role.name} />
         </div>
         {profile.personalData?.cpf && (
           <div className="profile-detail">

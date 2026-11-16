@@ -109,7 +109,16 @@ export function CourseForm({
   const [cover, setCover] = useState<File | null>(null);
   const [localError, setLocalError] = useState("");
   const [dragging, setDragging] = useState(false);
-  const [institutionSearch, setInstitutionSearch] = useState("");
+  const [institutionSearch, setInstitutionSearch] = useState(() => {
+    const selected = institutions.find(
+      (institution) => institution.name === values.campus,
+    );
+    return selected
+      ? `${selected.name}${selected.city ? ` - ${selected.city}` : ""}`
+      : "";
+  });
+  const [institutionPickerOpen, setInstitutionPickerOpen] = useState(false);
+  const institutionPicker = useRef<HTMLDivElement>(null);
   const extraFields = useRef<HTMLDetailsElement>(null);
   const preview = useMemo(
     () => (cover ? URL.createObjectURL(cover) : course?.coverUrl ?? ""),
@@ -119,16 +128,25 @@ export function CourseForm({
     values.startDate &&
     values.endDateEstimated &&
     new Date(values.endDateEstimated) <= new Date(values.startDate);
-  const visibleInstitutions = useMemo(() => {
-    const query = institutionSearch.trim().toLocaleLowerCase("pt-BR");
-    return institutions.filter((institution) => {
-      const matchesQuery =
+  const selectedInstitution = institutions.find(
+    (institution) => institution.name === values.campus,
+  );
+  const selectedInstitutionLabel = selectedInstitution
+    ? `${selectedInstitution.name}${selectedInstitution.city ? ` - ${selectedInstitution.city}` : ""}`
+    : "";
+  const institutionQuery =
+    institutionSearch === selectedInstitutionLabel
+      ? ""
+      : institutionSearch.trim().toLocaleLowerCase("pt-BR");
+  const visibleInstitutions = useMemo(
+    () =>
+      institutions.filter((institution) =>
         `${institution.name} ${institution.acronym ?? ""} ${institution.city ?? ""}`
           .toLocaleLowerCase("pt-BR")
-          .includes(query);
-      return matchesQuery || institution.name === values.campus;
-    });
-  }, [institutions, institutionSearch, values.campus]);
+          .includes(institutionQuery),
+      ),
+    [institutions, institutionQuery],
+  );
 
   useEffect(() => {
     return () => {
@@ -238,32 +256,92 @@ export function CourseForm({
             </div>
             <div className="field course-field-wide">
               <label htmlFor="course-campus">Instituição</label>
-              <input
-                id="institution-search"
-                className="input"
-                type="search"
-                value={institutionSearch}
-                onChange={(event) => setInstitutionSearch(event.target.value)}
-                placeholder="Pesquisar instituições cadastradas"
-                aria-label="Pesquisar instituições"
-                disabled={busy || Boolean(institutionsError)}
-              />
-              <select
-                id="course-campus"
-                className="input"
-                required
-                value={values.campus}
-                disabled={busy || Boolean(institutionsError)}
-                onChange={(event) => update("campus", event.target.value)}
-                aria-label="Instituição do curso"
+              <div
+                className="institution-picker"
+                ref={institutionPicker}
+                onBlur={(event) => {
+                  if (
+                    !institutionPicker.current?.contains(
+                      event.relatedTarget as Node | null,
+                    )
+                  ) {
+                    setInstitutionPickerOpen(false);
+                  }
+                }}
               >
-                <option value="">Selecione uma instituição</option>
-                {visibleInstitutions.map((institution) => (
-                  <option value={institution.name} key={institution.id}>
-                    {institution.name}
-                  </option>
-                ))}
-              </select>
+                <input
+                  id="course-campus"
+                  className="input"
+                  type="text"
+                  required
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-controls="course-institution-options"
+                  aria-expanded={institutionPickerOpen}
+                  aria-label="Instituição do curso"
+                  value={institutionSearch}
+                  disabled={busy || Boolean(institutionsError)}
+                  placeholder="Selecione ou pesquise uma instituição"
+                  onFocus={(event) => {
+                    event.currentTarget.select();
+                    setInstitutionPickerOpen(true);
+                  }}
+                  onChange={(event) => {
+                    setInstitutionSearch(event.target.value);
+                    update("campus", "");
+                    setInstitutionPickerOpen(true);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") setInstitutionPickerOpen(false);
+                    if (event.key === "Enter" && institutionPickerOpen) {
+                      const first = visibleInstitutions[0];
+                      if (first) {
+                        event.preventDefault();
+                        update("campus", first.name);
+                        setInstitutionSearch(
+                          `${first.name}${first.city ? ` - ${first.city}` : ""}`,
+                        );
+                        setInstitutionPickerOpen(false);
+                      }
+                    }
+                  }}
+                />
+                {institutionPickerOpen && (
+                  <div
+                    className="institution-picker-options"
+                    id="course-institution-options"
+                    role="listbox"
+                    aria-label="Instituições disponíveis"
+                  >
+                    {visibleInstitutions.length ? (
+                      visibleInstitutions.map((institution) => (
+                        <button
+                          className="institution-picker-option"
+                          type="button"
+                          role="option"
+                          aria-selected={institution.name === values.campus}
+                          key={institution.id}
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => {
+                            update("campus", institution.name);
+                            setInstitutionSearch(
+                              `${institution.name}${institution.city ? ` - ${institution.city}` : ""}`,
+                            );
+                            setInstitutionPickerOpen(false);
+                          }}
+                        >
+                          {institution.name}
+                          {institution.city && ` - ${institution.city}`}
+                        </button>
+                      ))
+                    ) : (
+                      <p className="institution-picker-empty">
+                        Nenhuma instituição encontrada.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="field">
               <label htmlFor="course-hours">Carga horária (horas)</label>
