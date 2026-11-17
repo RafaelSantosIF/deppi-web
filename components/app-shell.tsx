@@ -28,6 +28,10 @@ export function AppShell({
           ? "Usuários"
           : path === "/instituicoes"
             ? "Instituições"
+            : path === "/minhas-inscricoes" || path.startsWith("/minhas-inscricoes/")
+              ? "Minhas inscrições"
+            : path === "/inscricoes" || path.startsWith("/inscricoes/")
+              ? "Inscrições"
             : path === "/cursos" || path.startsWith("/cursos/")
               ? "Cursos"
               : "Início";

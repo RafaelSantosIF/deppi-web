@@ -61,6 +61,7 @@ export const navigation: NavigationItem[] = [
       "manage-courses",
       "create-course",
       "edit-own-course",
+      "enroll",
     ],
     href: "/cursos",
   },
@@ -68,13 +69,13 @@ export const navigation: NavigationItem[] = [
     label: "Minhas inscrições",
     icon: "assignment",
     permissions: ["enroll", "manage-own-enrollments"],
-    comingSoon: true,
+    href: "/minhas-inscricoes",
   },
   {
     label: "Inscrições",
     icon: "list_alt",
     permissions: ["manage-enrollments", "manage-any-enrollments"],
-    comingSoon: true,
+    href: "/inscricoes",
   },
   {
     label: "Professores",

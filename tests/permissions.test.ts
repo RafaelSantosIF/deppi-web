@@ -54,4 +54,18 @@ describe("navegação por permissões", () => {
       visibleNavigation(adminWithoutPermissions).map((item) => item.label),
     ).toEqual(["Início", "Perfil"]);
   });
+
+  it("encaminha alunos e DEPPI para os módulos de inscrição autorizados", () => {
+    const studentNavigation = visibleNavigation(user(["enroll"]));
+    const deppiNavigation = visibleNavigation(user(["manage-enrollments"]));
+
+    expect(studentNavigation.find((item) => item.label === "Cursos")?.href).toBe(
+      "/cursos",
+    );
+    const enrollmentItem = deppiNavigation.find(
+      (item) => item.label === "Inscrições",
+    );
+    expect(enrollmentItem?.href).toBe("/inscricoes");
+    expect(enrollmentItem?.comingSoon).toBeFalsy();
+  });
 });

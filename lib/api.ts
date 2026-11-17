@@ -12,19 +12,18 @@ export class ApiError extends Error {
   }
 }
 
-export async function apiRequest<T>(
+export async function apiFetch(
   path: string,
   init: RequestInit = {},
   token?: string,
-): Promise<T> {
+): Promise<Response> {
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (init.body && !(init.body instanceof FormData))
     headers.set("Content-Type", "application/json");
 
-  let response: Response;
   try {
-    response = await fetch(`${baseUrl}${path}`, {
+    return await fetch(`${baseUrl}${path}`, {
       ...init,
       headers,
       cache: "no-store",
@@ -36,6 +35,14 @@ export async function apiRequest<T>(
       "A API está indisponível no momento. Tente novamente.",
     );
   }
+}
+
+export async function apiRequest<T>(
+  path: string,
+  init: RequestInit = {},
+  token?: string,
+): Promise<T> {
+  const response = await apiFetch(path, init, token);
 
   if (response.status === 204) return undefined as T;
   let body: ApiResponse<T>;

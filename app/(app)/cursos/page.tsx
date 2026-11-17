@@ -1,25 +1,61 @@
 import { redirect } from "next/navigation";
+import { StudentCourses } from "@/components/student-courses";
 import { CoursesManagement } from "@/components/courses-management";
-import { can } from "@/lib/permissions";
 import { ApiError } from "@/lib/api";
+import { can } from "@/lib/permissions";
 import { authorizedRequest, requireSession } from "@/lib/session";
-import type { CourseSummary, Institution } from "@/lib/types";
-import { normalizeCourses } from "@/lib/courses";
+import { hasOpenEnrollment, normalizeCourses } from "@/lib/courses";
 import { normalizeInstitutions } from "@/lib/institutions";
+import { normalizeEnrollments } from "@/lib/enrollments";
+import type {
+  CourseSummary,
+  EnrollmentSummary,
+  Institution,
+} from "@/lib/types";
 
 export default async function CoursesPage() {
   const session = await requireSession();
-  if (
-    !can(
-      session.user,
-      "view-courses",
-      "manage-courses",
-      "create-course",
-      "edit-own-course",
-    )
-  ) {
-    redirect("/403");
+  const canManage = can(
+    session.user,
+    "manage-courses",
+    "create-course",
+    "edit-own-course",
+    "edit-any-course",
+  );
+  const canEnroll = can(session.user, "enroll");
+  if (canEnroll && !canManage) {
+    let courses: CourseSummary[] = [];
+    let enrollments: EnrollmentSummary[] = [];
+    let initialError = false;
+    try {
+      const [courseData, enrollmentData] = await Promise.all([
+        authorizedRequest<unknown>("/courses?status=PUBLISHED"),
+        authorizedRequest<unknown>("/enroll/enrollments/me"),
+      ]);
+      courses = normalizeCourses(courseData).filter(hasOpenEnrollment);
+      enrollments = normalizeEnrollments(enrollmentData);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) redirect("/login");
+      if (!(error instanceof ApiError)) throw error;
+      initialError = true;
+    }
+    return (
+      <StudentCourses
+        initialCourses={courses}
+        initialEnrollments={enrollments}
+        initialError={initialError}
+      />
+    );
   }
+
+  const canManageCourses = can(
+    session.user,
+    "view-courses",
+    "manage-courses",
+    "create-course",
+    "edit-own-course",
+  );
+  if (!canManageCourses) redirect("/403");
 
   let courses: CourseSummary[] = [];
   let initialError = false;

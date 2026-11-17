@@ -18,6 +18,8 @@ export async function GET(
     "manage-courses",
     "create-course",
     "edit-own-course",
+    "enroll",
+    "manage-own-enrollments",
   );
   if (denied) return denied;
   const { id } = await context.params;

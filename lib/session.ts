@@ -7,7 +7,7 @@ import {
 } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { apiRequest, ApiError } from "./api";
+import { apiFetch, apiRequest, ApiError } from "./api";
 import { normalizePermissions } from "./permissions";
 import type { Session, SessionUser, UserProfile } from "./types";
 
@@ -140,6 +140,24 @@ export async function authorizedRequest<T>(
     }
     return await apiRequest<T>(path, init, session.accessToken);
   }
+}
+
+export async function authorizedResponse(
+  path: string,
+  init: RequestInit = {},
+) {
+  let session = await readSession();
+  if (!session) throw new ApiError(401, "Sessão encerrada. Entre novamente.");
+  let response = await apiFetch(path, init, session.accessToken);
+  if (response.status !== 401) return response;
+  try {
+    session = await refreshSession(session);
+  } catch {
+    await clearSession();
+    throw new ApiError(401, "Sessão encerrada. Entre novamente.");
+  }
+  response = await apiFetch(path, init, session.accessToken);
+  return response;
 }
 
 export async function pageRequest<T>(

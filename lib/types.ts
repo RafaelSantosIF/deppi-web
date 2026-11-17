@@ -103,6 +103,33 @@ export type EnrollmentSummary = {
   course: { id: number; title: string; status: string };
 };
 
+export type EnrollmentDocumentSummary = {
+  id: string;
+  category: string;
+  fileName: string;
+  mimeType?: string;
+  size?: number;
+  createdAt: string;
+};
+
+export type EnrollmentQueueItem = {
+  id: number;
+  status: string;
+  name: string;
+  institution: string;
+  category: string;
+  bond: string;
+  receivesScholarship: boolean;
+  dedicatedHours: number;
+  participationStart: string;
+  participationEnd?: string | null;
+  householdIncomeCents: number | null;
+  householdSize: number | null;
+  createdAt: string;
+  course: { id: number; title: string };
+  documents: EnrollmentDocumentSummary[];
+};
+
 export type PermissionRecord = {
   id: number;
   name: string;

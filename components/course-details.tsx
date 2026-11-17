@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { normalizeCourses } from "@/lib/courses";
-import type { CourseSummary } from "@/lib/types";
+import { hasOpenEnrollment, normalizeCourses } from "@/lib/courses";
+import type { CourseSummary, EnrollmentSummary } from "@/lib/types";
 import { courseStatusActions } from "@/lib/course-permissions";
 import { Alert, Icon, StatusBadge } from "./ui";
 
@@ -41,12 +41,16 @@ export function CourseDetails({
   initialCourse,
   initialError = false,
   canManage,
+  canEnroll = false,
+  enrollment,
   canEdit = false,
   isOwner = false,
 }: {
   initialCourse: CourseSummary | null;
   initialError?: boolean;
   canManage: boolean;
+  canEnroll?: boolean;
+  enrollment?: EnrollmentSummary;
   canEdit?: boolean;
   isOwner?: boolean;
 }) {
@@ -272,6 +276,59 @@ export function CourseDetails({
               <button className="button button-danger-outline button-block" onClick={() => void deleteCourse()} disabled={busy}>
                 <Icon name="warning" size={15} /> Excluir curso
               </button>
+            )}
+          </aside>
+        )}
+        {canEnroll && (
+          <aside className="card course-enrollment-panel">
+            <div className="course-enrollment-capacity">
+              <span>Vagas</span>
+              <strong>
+                {typeof enrolled === "number" ? enrolled : "—"} / {course.maxBeneficiaries}
+              </strong>
+            </div>
+            {typeof enrolled === "number" && course.maxBeneficiaries > 0 && (
+              <div className="course-progress" aria-hidden="true">
+                <span
+                  style={{
+                    width: `${Math.min((enrolled / course.maxBeneficiaries) * 100, 100)}%`,
+                  }}
+                />
+              </div>
+            )}
+            {enrollment ? (
+              <>
+                <p className="field-note">
+                  {enrollment.status === "APPROVED"
+                    ? "Você já está inscrito neste curso."
+                    : "Você já solicitou inscrição neste curso."}
+                </p>
+                <Link className="button button-secondary button-block" href="/minhas-inscricoes">
+                  <Icon name="assignment" size={15} /> Ver minhas inscrições
+                </Link>
+              </>
+            ) : hasOpenEnrollment(course) ? (
+              <>
+                <p className="course-vacancies-note">
+                  {typeof enrolled === "number"
+                    ? `${Math.max(course.maxBeneficiaries - enrolled, 0)} vagas disponíveis`
+                    : "Inscrições abertas"}
+                </p>
+                <Link
+                  className="button button-primary button-block"
+                  href={`/cursos/${course.id}/inscricao`}
+                >
+                  <Icon name="group" size={16} /> Inscrever-se
+                </Link>
+                <div className="course-enrollment-steps">
+                  <small>Depois de se inscrever</small>
+                  <span>Informe seus dados de participação</span>
+                  <span>Envie os documentos comprobatórios</span>
+                  <span>Aguarde a análise do DEPPI</span>
+                </div>
+              </>
+            ) : (
+              <p className="field-note">As inscrições para este curso estão encerradas ou sem vagas.</p>
             )}
           </aside>
         )}

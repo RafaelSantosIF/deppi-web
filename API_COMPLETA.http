@@ -381,12 +381,12 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/institutions?active=true
 Authorization: Bearer {{accessToken}}
 
-### Consultar instituição por ID
-GET {{baseUrl}}/institutions/{{institutionId}}
-Authorization: Bearer {{accessToken}}
-
 ### Consultar o total de instituições cadastradas
 GET {{baseUrl}}/institutions/count
+Authorization: Bearer {{accessToken}}
+
+### Consultar instituição por ID
+GET {{baseUrl}}/institutions/{{institutionId}}
 Authorization: Bearer {{accessToken}}
 
 ### Criar instituição
@@ -640,6 +640,10 @@ Authorization: Bearer {{accessToken}}
 GET {{baseUrl}}/enroll/courses/{{courseId}}/enrollments
 Authorization: Bearer {{accessToken}}
 
+### Fila global de inscrições (somente manage-enrollments/manage-any-enrollments)
+GET {{baseUrl}}/enroll/enrollments?status=PENDING&page=1&limit=20
+Authorization: Bearer {{accessToken}}
+
 ### Consultar inscrição por ID
 GET {{baseUrl}}/enroll/enrollments/{{enrollmentId}}
 Authorization: Bearer {{accessToken}}
@@ -658,7 +662,9 @@ Content-Type: application/json
   "receivesScholarship": false,
   "dedicatedHours": 8,
   "participationStart": "2026-11-10T13:00:00.000Z",
-  "participationEnd": "2026-12-10T21:00:00.000Z"
+  "participationEnd": "2026-12-10T21:00:00.000Z",
+  "householdIncomeCents": 264000,
+  "householdSize": 4
 }
 
 ### Atualizar dados da inscrição
@@ -670,11 +676,13 @@ Content-Type: application/json
   "category": "Monitor",
   "bond": "Bolsista",
   "receivesScholarship": true,
-  "dedicatedHours": 12
+  "dedicatedHours": 12,
+  "householdIncomeCents": 264000,
+  "householdSize": 4
 }
 
 ### Aprovar inscrição
-# status: PENDING | APPROVED | REJECTED | WAITLISTED | CANCELLED
+# status: APPROVED | REJECTED | WAITLISTED | CANCELLED; somente inscrições PENDING podem mudar
 PATCH {{baseUrl}}/enroll/enrollments/{{enrollmentId}}/status
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -734,6 +742,10 @@ Content-Disposition: form-data; name="file"; filename="comprovante.pdf"
 Content-Type: application/pdf
 
 < ./sample/comprovante.pdf
+--EnrollmentFileBoundary
+Content-Disposition: form-data; name="category"
+
+PROOF_OF_INCOME
 --EnrollmentFileBoundary--
 
 ### Substituir documento da inscrição
@@ -746,6 +758,10 @@ Content-Disposition: form-data; name="file"; filename="comprovante-atualizado.pd
 Content-Type: application/pdf
 
 < ./sample/comprovante-atualizado.pdf
+--EnrollmentReplaceBoundary
+Content-Disposition: form-data; name="category"
+
+PROOF_OF_INCOME
 --EnrollmentReplaceBoundary--
 
 ### Baixar documento da inscrição

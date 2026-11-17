@@ -4,6 +4,8 @@ import { can } from "@/lib/permissions";
 import { ApiError } from "@/lib/api";
 import { pageRequest, requireSession } from "@/lib/session";
 import { normalizeCourses } from "@/lib/courses";
+import { normalizeEnrollments } from "@/lib/enrollments";
+import type { EnrollmentSummary } from "@/lib/types";
 
 export default async function CoursePage({
   params,
@@ -18,6 +20,8 @@ export default async function CoursePage({
       "manage-courses",
       "create-course",
       "edit-own-course",
+      "enroll",
+      "manage-own-enrollments",
     )
   ) {
     redirect("/403");
@@ -48,10 +52,31 @@ export default async function CoursePage({
   ) {
     notFound();
   }
+  const canEnroll =
+    can(session.user, "enroll") &&
+    !can(
+      session.user,
+      "manage-courses",
+      "create-course",
+      "edit-own-course",
+      "edit-any-course",
+    ) &&
+    course.status === "PUBLISHED";
+  let enrollment: EnrollmentSummary | undefined;
+  if (canEnroll) {
+    enrollment = normalizeEnrollments(
+      await pageRequest<unknown>(
+        "/enroll/enrollments/me",
+        `/cursos/${id}`,
+      ),
+    ).find((item) => item.course.id === course.id);
+  }
   return (
     <CourseDetails
       initialCourse={course}
       canManage={can(session.user, "manage-courses")}
+      canEnroll={canEnroll}
+      enrollment={enrollment}
       canEdit={
         course.responsibleId === session.user.id &&
         can(session.user, "edit-own-course") &&

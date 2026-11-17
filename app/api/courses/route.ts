@@ -13,6 +13,8 @@ export async function GET(request: Request) {
     "manage-courses",
     "create-course",
     "edit-own-course",
+    "enroll",
+    "manage-own-enrollments",
   );
   if (denied) return denied;
   const search = new URL(request.url).searchParams;

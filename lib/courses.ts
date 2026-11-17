@@ -19,6 +19,14 @@ export function normalizeCourses(data: unknown): CourseSummary[] {
       item._count && typeof item._count === "object"
         ? (item._count as Record<string, unknown>)
         : {};
+    const approvedTeamMembers = Array.isArray(item.teamMembers)
+      ? item.teamMembers.filter(
+          (member) =>
+            member &&
+            typeof member === "object" &&
+            (member as Record<string, unknown>).status === "APPROVED",
+        ).length
+      : undefined;
     const institution =
       item.institution && typeof item.institution === "object"
         ? (item.institution as Record<string, unknown>)
@@ -111,7 +119,8 @@ export function normalizeCourses(data: unknown): CourseSummary[] {
             ? item.cover.url
             : null,
       enrolled:
-        typeof item.enrolled === "number" ? item.enrolled : undefined,
+        approvedTeamMembers ??
+        (typeof item.enrolled === "number" ? item.enrolled : undefined),
       enrollmentsCount:
         typeof item.enrollmentsCount === "number"
           ? item.enrollmentsCount
