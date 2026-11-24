@@ -8,6 +8,7 @@ export type SessionUser = {
   id: number;
   name: string;
   email: string;
+  registration?: string | null;
   role: string;
   permissions: PermissionSlug[];
 };
@@ -22,6 +23,7 @@ export type UserProfile = {
   id: number;
   name: string;
   email: string;
+  registration?: string | null;
   personalEmail: string | null;
   institutionalPhones: string[];
   personalPhones: string[];
@@ -65,6 +67,8 @@ export type CourseSummary = {
   title: string;
   campus: string;
   status: string;
+  rejectionReason?: string;
+  updatedAt?: string;
   actionType: string;
   startDate: string;
   endDateEstimated: string;
@@ -99,6 +103,8 @@ export type CourseSummary = {
 export type EnrollmentSummary = {
   id: number;
   status: string;
+  rejectionReason?: string;
+  statusUpdatedAt?: string;
   documents: { id: string }[];
   course: { id: number; title: string; status: string };
 };
@@ -116,6 +122,8 @@ export type EnrollmentQueueItem = {
   id: number;
   status: string;
   name: string;
+  email?: string;
+  registration?: string;
   institution: string;
   category: string;
   bond: string;
@@ -147,10 +155,19 @@ export type ManagedUser = {
   id: number;
   name: string;
   email: string;
+  registration?: string;
   personalEmail?: string | null;
   institutionalPhones?: string[];
   personalPhones?: string[];
   role: { id: number; name: string } | string;
+};
+
+export type CourseMaterial = {
+  id: string;
+  fileName: string;
+  mimeType?: string;
+  size?: number;
+  createdAt?: string;
 };
 
 export type CourseProfessor = {

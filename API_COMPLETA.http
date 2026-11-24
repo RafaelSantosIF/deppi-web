@@ -118,12 +118,14 @@ GET {{baseUrl}}/users/me
 Authorization: Bearer {{accessToken}}
 
 ### Atualizar meu perfil e telefones
+# Para perfis de aluno, `registration` é opcional (até 20 caracteres).
 PATCH {{baseUrl}}/users/me
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "name": "Administrador Atualizado",
+  "name": "Maria da Silva Atualizada",
+  "registration": "2026001234",
   "personalEmail": "contato.pessoal@example.com",
   "personalPhones": ["79999999999"],
   "institutionalPhones": ["7933334444"]
@@ -172,12 +174,14 @@ Content-Type: application/json
   "email": "carlos@example.com",
   "password": "senhaSegura123",
   "roleId": 2,
+  "registration": "2026001234",
   "personalEmail": "carlos.pessoal@example.com",
   "institutionalPhones": ["7933335555"],
   "personalPhones": ["79988887777"]
 }
 
 ### Atualizar usuário
+# Para alunos, `registration` pode ser enviado com até 20 caracteres.
 PATCH {{baseUrl}}/users/{{userId}}
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
@@ -186,6 +190,7 @@ Content-Type: application/json
   "name": "Carlos Oliveira Atualizado",
   "email": "carlos.atualizado@example.com",
   "roleId": 2,
+  "registration": "2026005678",
   "personalPhones": ["79977776666"]
 }
 
@@ -657,6 +662,7 @@ Content-Type: application/json
   "userId": {{userId}},
   "name": "Maria da Silva",
   "institution": "Instituto Federal de Sergipe",
+  "registration": "2026001234",
   "category": "Aluno",
   "bond": "Discente",
   "receivesScholarship": false,

@@ -4,7 +4,7 @@ import { can } from "@/lib/permissions";
 import { ApiError } from "@/lib/api";
 import { normalizeEnrollments } from "@/lib/enrollments";
 import { hasOpenEnrollment, normalizeCourses } from "@/lib/courses";
-import { pageRequest, requireSession } from "@/lib/session";
+import { getCurrentUser, pageRequest, requireSession } from "@/lib/session";
 
 export default async function CourseEnrollmentPage({
   params,
@@ -38,5 +38,6 @@ export default async function CourseEnrollmentPage({
     redirect("/minhas-inscricoes");
   }
 
-  return <CourseEnrollmentForm course={course} user={session.user} />;
+  const user = await getCurrentUser(`/cursos/${id}/inscricao`);
+  return <CourseEnrollmentForm course={course} user={user} />;
 }

@@ -152,6 +152,30 @@ describe("fluxo de inscrição do aluno", () => {
     ).toHaveStyle({ width: "5%" });
   });
 
+  it("mostra a justificativa do indeferimento e oferece edição ao responsável", () => {
+    render(
+      <CourseDetails
+        initialCourse={{
+          ...course,
+          status: "REJECTED",
+          rejectionReason: "Inclua o cronograma revisado.",
+        }}
+        canManage={false}
+        canEdit
+        isOwner
+      />,
+    );
+
+    expect(
+      screen.getByText(/Inclua o cronograma revisado\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", {
+        name: "Corrigir e reenviar para avaliação",
+      }),
+    ).toHaveAttribute("href", "/cursos/8/editar");
+  });
+
   it("envia os campos aceitos pela API e abre a inscrição criada", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -167,6 +191,9 @@ describe("fluxo de inscrição do aluno", () => {
     fireEvent.change(screen.getByLabelText("Instituição de vínculo"), {
       target: { value: "IFCE" },
     });
+    fireEvent.change(screen.getByLabelText("Matrícula"), {
+      target: { value: "2026001234" },
+    });
     fireEvent.change(screen.getByLabelText("Renda mensal da família (R$)"), {
       target: { value: "2640.00" },
     });
@@ -179,6 +206,7 @@ describe("fluxo de inscrição do aluno", () => {
     const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(payload).toMatchObject({
       name: "Maria da Silva",
+      registration: "2026001234",
       institution: "IFCE",
       category: "Aluno",
       bond: "Discente",
@@ -190,5 +218,19 @@ describe("fluxo de inscrição do aluno", () => {
       householdSize: 4,
     });
     expect(payload.userId).toBeUndefined();
+  });
+
+  it("preenche automaticamente a matrícula salva no perfil", () => {
+    render(
+      <CourseEnrollmentForm
+        course={course}
+        user={{ ...user, registration: "2026005678" }}
+      />,
+    );
+
+    expect(screen.getByLabelText("Matrícula")).toHaveValue("2026005678");
+    expect(
+      screen.getByText("Matrícula preenchida com os dados do seu perfil."),
+    ).toBeInTheDocument();
   });
 });

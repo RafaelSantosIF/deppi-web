@@ -11,6 +11,13 @@ const statuses = new Set([
   "WAITLISTED",
   "CANCELLED",
 ]);
+const countStatuses = [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "CANCELLED",
+  "WAITLISTED",
+] as const;
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
@@ -48,17 +55,36 @@ export default async function EnrollmentQueuePage({
   if (status) query.set("status", status);
   if (search) query.set("search", search);
   if (courseId) query.set("courseId", courseId);
-  const data = await pageRequest<unknown>(
-    `/enroll/enrollments?${query.toString()}`,
-    "/inscricoes",
-  );
+  const [data, statusCounts] = await Promise.all([
+    pageRequest<unknown>(
+      `/enroll/enrollments?${query.toString()}`,
+      "/inscricoes",
+    ),
+    Promise.all(
+      countStatuses.map(async (countStatus) => {
+        const countQuery = new URLSearchParams({ page: "1", limit: "1" });
+        countQuery.set("status", countStatus);
+        const countData = await pageRequest<unknown>(
+          `/enroll/enrollments?${countQuery.toString()}`,
+          "/inscricoes",
+        );
+        return [countStatus, normalizeEnrollmentQueue(countData).pagination.total] as const;
+      }),
+    ),
+  ]);
   const result = normalizeEnrollmentQueue(data);
+  const counts = Object.fromEntries(statusCounts);
+  const totalCount = countStatuses.reduce(
+    (total, countStatus) => total + (counts[countStatus] ?? 0),
+    0,
+  );
 
   return (
     <EnrollmentQueue
       items={result.items}
       pagination={result.pagination}
       filters={{ status, search, courseId }}
+      statusCounts={{ ...counts, ALL: totalCount }}
     />
   );
 }

@@ -9,6 +9,8 @@ const response = {
       id: 14,
       status: "PENDING",
       name: "Maria da Silva",
+      email: "maria@ifce.edu.br",
+      registration: "2026001234",
       institution: "IFCE",
       category: "Aluno",
       bond: "Discente",
@@ -37,12 +39,36 @@ describe("fila de inscrições do DEPPI", () => {
     const result = normalizeEnrollmentQueue(response);
     expect(result.items[0]).toMatchObject({
       id: 14,
+      email: "maria@ifce.edu.br",
+      registration: "2026001234",
       householdIncomeCents: 264000,
       householdSize: 4,
       course: { id: 8, title: "Introdução à Programação" },
       documents: [{ category: "RG", fileName: "rg.pdf" }],
     });
     expect(result.pagination).toEqual(response.pagination);
+  });
+
+  it("usa o e-mail e a matrícula do perfil quando a inscrição não os contém", () => {
+    const result = normalizeEnrollmentQueue({
+      items: [
+        {
+          ...response.items[0],
+          email: undefined,
+          registration: undefined,
+          user: {
+            email: "maria@ifce.edu.br",
+            functionalData: { registration: "2026005678" },
+          },
+        },
+      ],
+      pagination: response.pagination,
+    });
+
+    expect(result.items[0]).toMatchObject({
+      email: "maria@ifce.edu.br",
+      registration: "2026005678",
+    });
   });
 
   it("mostra os dados resumidos e liga à análise da inscrição", () => {
@@ -52,10 +78,20 @@ describe("fila de inscrições do DEPPI", () => {
         items={result.items}
         pagination={result.pagination}
         filters={{ status: "PENDING", search: "", courseId: "" }}
+        statusCounts={{
+          PENDING: 1,
+          APPROVED: 2,
+          REJECTED: 0,
+          CANCELLED: 0,
+          ALL: 3,
+        }}
       />,
     );
     expect(markup).toContain("Maria da Silva");
-    expect(markup).toContain("2.640,00");
+    expect(markup).toContain("maria@ifce.edu.br");
+    expect(markup).toContain("2026001234");
+    expect(markup).toContain("Pendentes");
+    expect(markup).toContain("Todas");
     expect(markup).toContain(encodeURIComponent("Introdução à Programação"));
   });
 });

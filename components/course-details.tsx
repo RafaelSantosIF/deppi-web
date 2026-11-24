@@ -7,6 +7,7 @@ import { hasOpenEnrollment, normalizeCourses } from "@/lib/courses";
 import type { CourseSummary, EnrollmentSummary } from "@/lib/types";
 import { courseStatusActions } from "@/lib/course-permissions";
 import { Alert, Icon, StatusBadge } from "./ui";
+import { CourseMaterialsManager } from "./course-materials-manager";
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "long",
@@ -173,6 +174,24 @@ export function CourseDetails({
       </div>
       {error && <div className="permissions-alert"><Alert>{error}</Alert></div>}
       {success && <div className="permissions-alert"><Alert tone="success">{success}</Alert></div>}
+      {course.status === "REJECTED" && (
+        <div className="permissions-alert">
+          <Alert>
+            <strong>Solicitação do curso indeferida.</strong>{" "}
+            Justificativa:{" "}
+            {course.rejectionReason?.trim() ||
+              "O DEPPI não informou uma justificativa."}
+            {canEdit && (
+              <>
+                {" "}
+                <Link href={`/cursos/${course.id}/editar`}>
+                  Corrigir e reenviar para avaliação
+                </Link>
+              </>
+            )}
+          </Alert>
+        </div>
+      )}
 
       <div className={`course-detail-cover ${course.coverUrl ? "course-detail-cover-image" : ""}`} style={coverStyle}>
         <strong>{course.title.slice(0, 2).toLocaleUpperCase("pt-BR")}</strong>
@@ -235,6 +254,10 @@ export function CourseDetails({
               <p>{course.activitiesPerformed}</p>
             </section>
           )}
+          {(canManage || canEdit) &&
+            ["APPROVED", "PUBLISHED", "CLOSED"].includes(course.status) && (
+              <CourseMaterialsManager courseId={course.id} />
+            )}
         </section>
 
         {(canManage || canEdit || (isOwner && course.status === "PENDING_APPROVAL")) && (
@@ -306,6 +329,14 @@ export function CourseDetails({
                 <Link className="button button-secondary button-block" href="/minhas-inscricoes">
                   <Icon name="assignment" size={15} /> Ver minhas inscrições
                 </Link>
+                {enrollment.status === "APPROVED" && (
+                  <Link
+                    className="button button-primary button-block"
+                    href={`/cursos/${course.id}/materiais`}
+                  >
+                    <Icon name="assignment" size={15} /> Materiais didáticos
+                  </Link>
+                )}
               </>
             ) : hasOpenEnrollment(course) ? (
               <>

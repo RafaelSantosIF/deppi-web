@@ -15,6 +15,7 @@ export function CourseEnrollmentForm({
 }) {
   const router = useRouter();
   const [name, setName] = useState(user.name);
+  const [registration, setRegistration] = useState(user.registration ?? "");
   const [institution, setInstitution] = useState("");
   const [category, setCategory] = useState("Aluno");
   const [bond, setBond] = useState("Discente");
@@ -34,6 +35,7 @@ export function CourseEnrollmentForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
+          ...(registration.trim() ? { registration: registration.trim() } : {}),
           institution: institution.trim(),
           category: category.trim(),
           bond: bond.trim(),
@@ -115,6 +117,22 @@ export function CourseEnrollmentForm({
                 onChange={(event) => setInstitution(event.target.value)}
                 maxLength={150}
               />
+            </div>
+            <div className="field">
+              <label htmlFor="enrollment-registration">Matrícula</label>
+              <input
+                className="input"
+                id="enrollment-registration"
+                value={registration}
+                onChange={(event) => setRegistration(event.target.value)}
+                maxLength={20}
+                placeholder="Informe sua matrícula"
+              />
+              {user.registration && (
+                <span className="field-note">
+                  Matrícula preenchida com os dados do seu perfil.
+                </span>
+              )}
             </div>
             <div className="field">
               <label htmlFor="enrollment-category">Categoria</label>

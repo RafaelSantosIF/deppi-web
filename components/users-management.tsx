@@ -23,6 +23,7 @@ function normalizeUsers(data: unknown): ManagedUser[] {
       id: Number(item.id),
       name: String(item.name ?? "Usuário"),
       email: String(item.email ?? ""),
+      registration: typeof item.registration === "string" ? item.registration : undefined,
       personalEmail: typeof item.personalEmail === "string" ? item.personalEmail : null,
       institutionalPhones: arrayValue(item.institutionalPhones),
       personalPhones: arrayValue(item.personalPhones),
@@ -48,6 +49,11 @@ function roleId(user: ManagedUser) {
   return typeof user.role === "string" ? 0 : user.role.id;
 }
 
+function isStudentRole(value: string) {
+  const normalized = value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return normalized.includes("alun") || normalized.includes("estudante");
+}
+
 export function UsersManagement({ initialUsers, initialRoles, initialError = false }: { initialUsers: unknown; initialRoles: unknown; initialError?: boolean }) {
   const [users, setUsers] = useState(normalizeUsers(initialUsers));
   const [roles, setRoles] = useState(normalizeRoles(initialRoles));
@@ -61,7 +67,7 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
   const [resetting, setResetting] = useState<ManagedUser | null>(null);
   const [resetPassword, setResetPassword] = useState("");
   const [resetConfirmation, setResetConfirmation] = useState("");
-  const [form, setForm] = useState({ name: "", email: "", personalEmail: "", password: "", roleId: "", personalPhones: "", institutionalPhones: "" });
+  const [form, setForm] = useState({ name: "", email: "", registration: "", personalEmail: "", password: "", roleId: "", personalPhones: "", institutionalPhones: "" });
 
   const visibleUsers = useMemo(() => users.filter((user) => {
     const matchesSearch = `${user.name} ${user.email}`.toLowerCase().includes(search.toLowerCase());
@@ -70,7 +76,7 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
   }), [users, search, roleFilter]);
 
   function openCreate() {
-    setForm({ name: "", email: "", personalEmail: "", password: "", roleId: roles[0] ? String(roles[0].id) : "", personalPhones: "", institutionalPhones: "" });
+    setForm({ name: "", email: "", registration: "", personalEmail: "", password: "", roleId: roles[0] ? String(roles[0].id) : "", personalPhones: "", institutionalPhones: "" });
     setCreating(true);
     setEditing(null);
   }
@@ -81,6 +87,7 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
     setForm({
       name: user.name,
       email: user.email,
+      registration: user.registration ?? "",
       personalEmail: user.personalEmail ?? "",
       password: "",
       roleId: String(roleId(user) || roles.find((role) => role.name === roleName(user))?.id || ""),
@@ -104,7 +111,7 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!form.name.trim() || !form.email.includes("@") || !form.roleId || (!creating && editing === null)) {
+    if (!form.name.trim() || !form.email.includes("@") || !form.roleId || (!creating && editing === null) || form.registration.length > 20) {
       setError("Preencha nome, e-mail e cargo corretamente.");
       return;
     }
@@ -114,10 +121,16 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
     }
 
     const phones = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
+    const selectedRoleName =
+      roles.find((role) => String(role.id) === form.roleId)?.name ?? "";
+    const studentAccount =
+      isStudentRole(selectedRoleName) ||
+      (editing !== null && isStudentRole(roleName(editing)));
     const payload = {
       name: form.name.trim(),
       email: form.email.trim(),
       roleId: Number(form.roleId),
+      ...(studentAccount ? { registration: form.registration.trim() } : {}),
       ...(form.personalEmail.trim() ? { personalEmail: form.personalEmail.trim() } : {}),
       personalPhones: phones(form.personalPhones),
       institutionalPhones: phones(form.institutionalPhones),
@@ -196,6 +209,11 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
   }
 
   const modalOpen = creating || editing !== null;
+  const selectedRoleName =
+    roles.find((role) => String(role.id) === form.roleId)?.name ?? "";
+  const showRegistration =
+    isStudentRole(selectedRoleName) ||
+    (editing !== null && isStudentRole(roleName(editing)));
 
   return (
     <>
@@ -250,6 +268,7 @@ export function UsersManagement({ initialUsers, initialRoles, initialError = fal
               <div className="field"><label htmlFor="user-role">Cargo</label><select id="user-role" className="input" value={form.roleId} onChange={(event) => setForm({ ...form, roleId: event.target.value })}><option value="">Selecione um cargo</option>{roles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select></div>
               <div className="field"><label htmlFor="user-email">E-mail institucional</label><input id="user-email" className="input" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></div>
               <div className="field"><label htmlFor="user-personal-email">E-mail pessoal</label><input id="user-personal-email" className="input" type="email" value={form.personalEmail} onChange={(event) => setForm({ ...form, personalEmail: event.target.value })} /></div>
+              {showRegistration && <div className="field"><label htmlFor="user-registration">Matrícula</label><input id="user-registration" className="input" value={form.registration} onChange={(event) => setForm({ ...form, registration: event.target.value })} maxLength={20} /></div>}
               {creating && <div className="field"><label htmlFor="user-password">Senha inicial</label><input id="user-password" className="input" type="password" minLength={8} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} /><span className="field-note">Mínimo de 8 caracteres.</span></div>}
               <div className="field"><label htmlFor="user-phones">Telefones pessoais</label><input id="user-phones" className="input" value={form.personalPhones} onChange={(event) => setForm({ ...form, personalPhones: event.target.value })} placeholder="Separe por vírgula" /></div>
               <div className="field"><label htmlFor="institution-phones">Telefones institucionais</label><input id="institution-phones" className="input" value={form.institutionalPhones} onChange={(event) => setForm({ ...form, institutionalPhones: event.target.value })} placeholder="Separe por vírgula" /></div>

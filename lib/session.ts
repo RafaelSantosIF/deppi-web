@@ -105,6 +105,10 @@ export async function refreshSession(session: Session) {
           typeof payload.email === "string"
             ? payload.email
             : session.user.email,
+        registration:
+          typeof payload.registration === "string"
+            ? payload.registration
+            : session.user.registration,
         role:
           typeof payload.role === "string" ? payload.role : session.user.role,
         permissions: normalizePermissions(payload.permissions),
@@ -186,6 +190,10 @@ export async function getCurrentUser(
     id: profile.id,
     name: profile.name,
     email: profile.email,
+    registration:
+      profile.registration === null
+        ? ""
+        : (profile.registration ?? session.user.registration),
     role: profile.role.name,
     permissions: normalizePermissions(session.user.permissions),
   };

@@ -14,22 +14,13 @@ function formatDate(value: string) {
   return Number.isNaN(date.getTime()) ? "—" : dateFormatter.format(date);
 }
 
-function formatIncome(value: number | null, size: number | null) {
-  if (value === null) return "Renda não informada";
-  const total = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value / 100);
-  return size ? `${total} · ${size} pessoa${size === 1 ? "" : "s"}` : total;
-}
-
 function pageHref(
   page: number,
   filters: { status: string; search: string; courseId: string },
 ) {
   const params = new URLSearchParams();
   params.set("page", String(page));
-  if (filters.status) params.set("status", filters.status);
+  params.set("status", filters.status);
   if (filters.search) params.set("search", filters.search);
   if (filters.courseId) params.set("courseId", filters.courseId);
   return `/inscricoes?${params.toString()}`;
@@ -39,56 +30,60 @@ export function EnrollmentQueue({
   items,
   pagination,
   filters,
+  statusCounts,
 }: {
   items: EnrollmentQueueItem[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
   filters: { status: string; search: string; courseId: string };
+  statusCounts: Record<string, number>;
 }) {
+  const tabs = [
+    { status: "PENDING", label: "Pendentes" },
+    { status: "APPROVED", label: "Deferidas" },
+    { status: "REJECTED", label: "Indeferidas" },
+    { status: "CANCELLED", label: "Canceladas" },
+    { status: "", label: "Todas" },
+  ];
+
   return (
     <>
       <div className="page-header users-header">
         <div>
           <h1>Inscrições</h1>
-          <p>Analise os dados e documentos enviados pelos alunos.</p>
+          <p>Analise, defira ou indefira as inscrições dos alunos.</p>
         </div>
-        <span className="enrollment-queue-total">{pagination.total} solicitações</span>
       </div>
 
-      <form className="enrollment-queue-filters" method="get" aria-label="Filtros de inscrições">
-        <label className="field">
-          <span>Buscar</span>
-          <input
-            className="input"
-            name="search"
-            defaultValue={filters.search}
-            placeholder="Aluno, curso ou instituição"
-          />
-        </label>
-        <label className="field">
-          <span>Situação</span>
-          <select className="input" name="status" defaultValue={filters.status}>
-            <option value="">Todas</option>
-            <option value="PENDING">Pendentes</option>
-            <option value="APPROVED">Aprovadas</option>
-            <option value="REJECTED">Rejeitadas</option>
-            <option value="WAITLISTED">Lista de espera</option>
-            <option value="CANCELLED">Canceladas</option>
-          </select>
-        </label>
-        <label className="field">
-          <span>ID do curso</span>
-          <input
-            className="input"
-            name="courseId"
-            type="number"
-            min="1"
-            defaultValue={filters.courseId}
-          />
-        </label>
-        <button className="button button-primary" type="submit">
-          <Icon name="search" size={15} /> Filtrar
-        </button>
-      </form>
+      <div className="enrollment-queue-toolbar">
+        <nav className="enrollment-queue-tabs" aria-label="Situação das inscrições">
+          {tabs.map((tab) => (
+            <Link
+              key={tab.status || "ALL"}
+              className={`enrollment-queue-tab ${filters.status === tab.status ? "enrollment-queue-tab-active" : ""}`}
+              href={pageHref(1, { ...filters, status: tab.status })}
+              aria-current={filters.status === tab.status ? "page" : undefined}
+            >
+              {tab.label}
+              <span>{statusCounts[tab.status || "ALL"] ?? 0}</span>
+            </Link>
+          ))}
+        </nav>
+        <form className="enrollment-queue-search" method="get" aria-label="Buscar inscrições">
+          <input type="hidden" name="status" value={filters.status} />
+          {filters.courseId && (
+            <input type="hidden" name="courseId" value={filters.courseId} />
+          )}
+          <label className="enrollment-queue-search-field">
+            <Icon name="search" size={16} />
+            <input
+              name="search"
+              defaultValue={filters.search}
+              placeholder="Buscar aluno ou curso"
+              aria-label="Buscar aluno ou curso"
+            />
+          </label>
+        </form>
+      </div>
 
       {items.length ? (
         <div className="card enrollment-queue-table-wrap">
@@ -96,10 +91,10 @@ export function EnrollmentQueue({
             <thead>
               <tr>
                 <th>Aluno</th>
+                <th>E-mail</th>
+                <th>Matrícula</th>
                 <th>Curso</th>
-                <th>Dados familiares</th>
-                <th>Documentos</th>
-                <th>Solicitada em</th>
+                <th>Data</th>
                 <th>Situação</th>
                 <th aria-label="Ação" />
               </tr>
@@ -111,26 +106,63 @@ export function EnrollmentQueue({
                     <strong>{item.name}</strong>
                     <small>{item.institution}</small>
                   </td>
-                  <td>
-                    <strong>{item.course.title}</strong>
-                    <small>{item.category} · {item.bond}</small>
+                  <td title={item.email ?? ""}>
+                    <span className="enrollment-queue-truncate">
+                      {item.email || "—"}
+                    </span>
                   </td>
-                  <td>{formatIncome(item.householdIncomeCents, item.householdSize)}</td>
-                  <td>{item.documents.length} arquivo{item.documents.length === 1 ? "" : "s"}</td>
+                  <td className="enrollment-queue-registration">
+                    {item.registration || "—"}
+                  </td>
+                  <td>
+                    <span className="enrollment-queue-truncate" title={item.course.title}>
+                      {item.course.title}
+                    </span>
+                  </td>
                   <td>{formatDate(item.createdAt)}</td>
                   <td><StatusBadge status={item.status} kind="enrollment" /></td>
                   <td>
                     <Link
-                      className="button button-secondary"
+                      className="enrollment-queue-open"
                       href={`/inscricoes/${item.id}?course=${encodeURIComponent(item.course.title)}`}
+                      aria-label={`Analisar inscrição de ${item.name}`}
                     >
-                      Analisar
+                      <Icon name="arrow" size={15} />
                     </Link>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {items.length > 0 && (
+            <nav className="enrollment-queue-pagination" aria-label="Paginação das inscrições">
+              <span>
+                Mostrando {(pagination.page - 1) * pagination.limit + 1}–
+                {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} inscrições
+              </span>
+              <div>
+                <Link
+                  className={`button button-secondary ${pagination.page <= 1 ? "button-disabled" : ""}`}
+                  href={pageHref(Math.max(1, pagination.page - 1), filters)}
+                  aria-disabled={pagination.page <= 1}
+                  tabIndex={pagination.page <= 1 ? -1 : undefined}
+                >
+                  Anterior
+                </Link>
+                <Link
+                  className={`button button-secondary ${pagination.page >= pagination.totalPages ? "button-disabled" : ""}`}
+                  href={pageHref(Math.min(pagination.totalPages, pagination.page + 1), filters)}
+                  aria-disabled={pagination.page >= pagination.totalPages}
+                  tabIndex={pagination.page >= pagination.totalPages ? -1 : undefined}
+                >
+                  Próxima
+                </Link>
+                <span className="enrollment-queue-page-number">
+                  {pagination.page} / {pagination.totalPages}
+                </span>
+              </div>
+            </nav>
+          )}
         </div>
       ) : (
         <div className="card">
@@ -141,31 +173,6 @@ export function EnrollmentQueue({
         </div>
       )}
 
-      {pagination.totalPages > 1 && (
-        <nav className="enrollment-queue-pagination" aria-label="Paginação das inscrições">
-          <span>
-            Página {pagination.page} de {pagination.totalPages}
-          </span>
-          <div>
-            <Link
-              className={`button button-secondary ${pagination.page <= 1 ? "button-disabled" : ""}`}
-              href={pageHref(Math.max(1, pagination.page - 1), filters)}
-              aria-disabled={pagination.page <= 1}
-              tabIndex={pagination.page <= 1 ? -1 : undefined}
-            >
-              Anterior
-            </Link>
-            <Link
-              className={`button button-secondary ${pagination.page >= pagination.totalPages ? "button-disabled" : ""}`}
-              href={pageHref(Math.min(pagination.totalPages, pagination.page + 1), filters)}
-              aria-disabled={pagination.page >= pagination.totalPages}
-              tabIndex={pagination.page >= pagination.totalPages ? -1 : undefined}
-            >
-              Próxima
-            </Link>
-          </div>
-        </nav>
-      )}
     </>
   );
 }

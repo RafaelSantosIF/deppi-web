@@ -34,6 +34,19 @@ describe("cursos", () => {
     });
   });
 
+  it("preserva a justificativa do indeferimento retornada pela API", () => {
+    const [course] = normalizeCourses([
+      {
+        id: 11,
+        title: "Curso revisado",
+        status: "REJECTED",
+        reason: "Atualize o cronograma.",
+      },
+    ]);
+
+    expect(course.rejectionReason).toBe("Atualize o cronograma.");
+  });
+
   it("considera vagas disponíveis ao ordenar os cursos publicados", () => {
     const [available, full, draft] = normalizeCourses([
       {
@@ -128,6 +141,9 @@ describe("cursos", () => {
     expect(courseStatusActions("PENDING_APPROVAL", false, true)).toEqual([]);
     expect(courseStatusActions("APPROVED", false, true)).toEqual(["PUBLISHED"]);
     expect(courseStatusActions("PUBLISHED", false, true)).toEqual(["CLOSED"]);
+    expect(courseStatusActions("REJECTED", false, true)).toEqual([
+      "PENDING_APPROVAL",
+    ]);
     expect(courseStatusActions("PENDING_APPROVAL", false, false)).toEqual([]);
     expect(courseStatusActions("PENDING_APPROVAL", true, false)).toEqual([
       "APPROVED",

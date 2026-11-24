@@ -56,6 +56,7 @@ export function EnrollmentDocuments({
   enrollmentId,
   courseTitle,
   status,
+  rejectionReason = "",
   householdIncomeCents,
   householdSize,
   canUpdateHousehold,
@@ -64,6 +65,7 @@ export function EnrollmentDocuments({
   enrollmentId: number;
   courseTitle: string;
   status: string;
+  rejectionReason?: string;
   householdIncomeCents: number | null;
   householdSize: number | null;
   canUpdateHousehold: boolean;
@@ -195,6 +197,16 @@ export function EnrollmentDocuments({
         <StatusBadge status={status} kind="enrollment" />
       </div>
 
+      {status === "REJECTED" && (
+        <div className="permissions-alert">
+          <Alert>
+            <strong>Inscrição indeferida.</strong>{" "}
+            Justificativa:{" "}
+            {rejectionReason.trim() ||
+              "A equipe não informou uma justificativa."}
+          </Alert>
+        </div>
+      )}
       {error && <div className="permissions-alert"><Alert>{error}</Alert></div>}
       {success && <div className="permissions-alert"><Alert tone="success">{success}</Alert></div>}
       <div className="enrollment-document-layout">

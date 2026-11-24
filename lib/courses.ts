@@ -40,6 +40,14 @@ export function normalizeCourses(data: unknown): CourseSummary[] {
       title: String(item.title ?? "Curso"),
       campus: String(item.campus ?? ""),
       status: String(item.status ?? "DRAFT"),
+      rejectionReason:
+        typeof item.reason === "string"
+          ? item.reason
+          : typeof item.rejectionReason === "string"
+            ? item.rejectionReason
+            : undefined,
+      updatedAt:
+        typeof item.updatedAt === "string" ? item.updatedAt : undefined,
       actionType: String(item.actionType ?? "Curso"),
       startDate: String(item.startDate ?? ""),
       endDateEstimated: String(item.endDateEstimated ?? ""),

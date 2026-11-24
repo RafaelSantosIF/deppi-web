@@ -17,6 +17,7 @@ const profile: UserProfile = {
   id: 7,
   name: "Maria da Silva",
   email: "maria@ifce.edu.br",
+  registration: "2026001234",
   personalEmail: null,
   institutionalPhones: [],
   personalPhones: [],
@@ -54,6 +55,9 @@ describe("autogestão do perfil", () => {
     fireEvent.change(screen.getByLabelText("Telefones pessoais"), {
       target: { value: "79999999999, 79888888888" },
     });
+    fireEvent.change(screen.getByLabelText("Matrícula"), {
+      target: { value: "2026005678" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Salvar dados" }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(fetchMock.mock.calls[0][0]).toBe("/api/profile");
@@ -63,6 +67,9 @@ describe("autogestão do perfil", () => {
     ]);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).email).toBe(
       "maria.nova@ifce.edu.br",
+    );
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).registration).toBe(
+      "2026005678",
     );
   });
 
@@ -133,5 +140,29 @@ describe("autogestão do perfil", () => {
     render(<ProfileForms profile={profile} />);
     fireEvent.click(screen.getByRole("button", { name: "Salvar dados" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/403"));
+  });
+
+  it("não exibe sucesso quando a API retorna success false", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: false,
+          error: "A matrícula não foi atualizada.",
+        }),
+      }),
+    );
+    render(<ProfileForms profile={profile} />);
+    fireEvent.change(screen.getByLabelText("Matrícula"), {
+      target: { value: "2026005678" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Salvar dados" }));
+
+    expect(
+      await screen.findByText("A matrícula não foi atualizada."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Alteração salva com sucesso.")).not.toBeInTheDocument();
+    expect(refresh).not.toHaveBeenCalled();
   });
 });

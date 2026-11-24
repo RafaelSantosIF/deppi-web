@@ -34,6 +34,7 @@ describe("criação de inscrição", () => {
       body: JSON.stringify({
         userId: 99,
         name: "Maria da Silva",
+        registration: "2026001234",
         institution: "IFCE",
         category: "Aluno",
         bond: "Discente",
@@ -59,6 +60,9 @@ describe("criação de inscrição", () => {
       }),
     );
     expect(JSON.parse(authorizedRequest.mock.calls[0][1].body).userId).toBe(21);
+    expect(JSON.parse(authorizedRequest.mock.calls[0][1].body).registration).toBe(
+      "2026001234",
+    );
   });
 
   it("recusa dados incompletos antes de chamar a API", async () => {

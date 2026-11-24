@@ -38,14 +38,31 @@ export function MyEnrollments({
                   {enrollment.documents.length === 1 ? "" : "s"} anexado
                   {enrollment.documents.length === 1 ? "" : "s"}
                 </small>
+                {enrollment.status === "REJECTED" && (
+                  <small>
+                    Justificativa:{" "}
+                    {enrollment.rejectionReason?.trim() ||
+                      "A equipe não informou uma justificativa."}
+                  </small>
+                )}
               </span>
               <StatusBadge status={enrollment.status} kind="enrollment" />
-              <Link
-                className="button button-secondary"
-                href={`/minhas-inscricoes/${enrollment.id}`}
-              >
-                Ver inscrição
-              </Link>
+              <div className="enrollment-row-links">
+                <Link
+                  className="button button-secondary"
+                  href={`/minhas-inscricoes/${enrollment.id}`}
+                >
+                  Ver inscrição
+                </Link>
+                {enrollment.status === "APPROVED" && (
+                  <Link
+                    className="button button-primary"
+                    href={`/cursos/${enrollment.course.id}/materiais`}
+                  >
+                    Materiais didáticos
+                  </Link>
+                )}
+              </div>
             </div>
           ))
         ) : (

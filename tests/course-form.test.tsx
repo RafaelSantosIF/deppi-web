@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { CourseForm } from "@/components/course-form";
-import type { Institution } from "@/lib/types";
+import type { CourseSummary, Institution } from "@/lib/types";
 
 afterEach(cleanup);
 
@@ -72,5 +72,44 @@ describe("seletor de instituição do curso", () => {
 
     expect(selector).toHaveValue("Instituto Federal de Sergipe - Aracaju");
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("mostra a justificativa e mantém a opção de reenviar curso indeferido", () => {
+    const course: CourseSummary = {
+      id: 8,
+      title: "Curso indeferido",
+      campus: institutions[0].name,
+      status: "REJECTED",
+      rejectionReason: "Ajuste a carga horária.",
+      actionType: "Curso",
+      startDate: "2026-11-10T12:00:00.000Z",
+      endDateEstimated: "2026-12-10T15:00:00.000Z",
+      executionHours: 40,
+      maxBeneficiaries: 20,
+      responsibleId: 1,
+    };
+
+    render(
+      <CourseForm
+        course={course}
+        institutions={institutions}
+        responsibleId={1}
+        responsibleName="Maria"
+        professors={[]}
+        canAssignResponsible={false}
+        busy={false}
+        onCancel="/cursos/8"
+        onSubmit={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    expect(
+      screen.getByText(/Ajuste a carga horária\./),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: "Salvar e enviar para avaliação",
+      }),
+    ).toBeEnabled();
   });
 });

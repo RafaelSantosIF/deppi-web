@@ -37,6 +37,18 @@ export function normalizeEnrollments(data: unknown): EnrollmentSummary[] {
       {
         id,
         status: String(item.status ?? "PENDING"),
+        rejectionReason:
+          typeof item.statusReason === "string"
+            ? item.statusReason
+            : typeof item.reason === "string"
+              ? item.reason
+              : typeof item.rejectionReason === "string"
+                ? item.rejectionReason
+                : undefined,
+        statusUpdatedAt:
+          typeof item.statusUpdatedAt === "string"
+            ? item.statusUpdatedAt
+            : undefined,
         documents,
         course: {
           id: courseId,
@@ -46,6 +58,29 @@ export function normalizeEnrollments(data: unknown): EnrollmentSummary[] {
       },
     ];
   });
+}
+
+export function normalizeEnrollmentContact(item: Record<string, unknown>) {
+  const user =
+    item.user && typeof item.user === "object"
+      ? (item.user as Record<string, unknown>)
+      : {};
+  const functionalData =
+    user.functionalData && typeof user.functionalData === "object"
+      ? (user.functionalData as Record<string, unknown>)
+      : {};
+
+  return {
+    email:
+      (typeof item.email === "string" && item.email) ||
+      (typeof user.email === "string" ? user.email : undefined),
+    registration:
+      (typeof item.registration === "string" && item.registration) ||
+      (typeof user.registration === "string" && user.registration) ||
+      (typeof functionalData.registration === "string"
+        ? functionalData.registration
+        : undefined),
+  };
 }
 
 export function normalizeEnrollmentDocuments(data: unknown) {
@@ -92,6 +127,7 @@ export function normalizeEnrollmentQueue(data: unknown): {
       item.course && typeof item.course === "object"
         ? (item.course as Record<string, unknown>)
         : {};
+    const contact = normalizeEnrollmentContact(item);
     const id = Number(item.id);
     const courseId = Number(course.id);
     if (!Number.isInteger(id) || !Number.isInteger(courseId)) return [];
@@ -101,6 +137,8 @@ export function normalizeEnrollmentQueue(data: unknown): {
         id,
         status: String(item.status ?? "PENDING"),
         name: String(item.name ?? "Aluno"),
+        email: contact.email,
+        registration: contact.registration,
         institution: String(item.institution ?? ""),
         category: String(item.category ?? ""),
         bond: String(item.bond ?? ""),

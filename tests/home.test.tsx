@@ -93,6 +93,55 @@ describe("Início por permissão", () => {
     expect(html).toContain("Deferida");
   });
 
+  it("mostra indeferimento de inscrição com justificativa e link para os detalhes", async () => {
+    getCurrentUser.mockResolvedValue(user(["view-courses", "enroll"]));
+    pageRequest.mockImplementation((path: string) =>
+      path === "/courses"
+        ? Promise.resolve([])
+        : Promise.resolve([
+            {
+              id: 21,
+              status: "REJECTED",
+              statusReason: "Comprovante de renda ilegível.",
+              course: {
+                id: 9,
+                title: "Introdução a Python",
+                status: "PUBLISHED",
+              },
+            },
+          ]),
+    );
+
+    const html = renderToStaticMarkup(await HomePage());
+
+    expect(html).toContain("Inscrição indeferida: Introdução a Python");
+    expect(html).toContain("Comprovante de renda ilegível.");
+    expect(html).toContain('href="/minhas-inscricoes/21"');
+  });
+
+  it("mostra feedback de curso rejeitado ao professor sem exigir acesso às inscrições", async () => {
+    getCurrentUser.mockResolvedValue(user(["edit-own-course"]));
+    pageRequest.mockResolvedValue([
+      {
+        id: 12,
+        title: "Projeto de extensão",
+        status: "REJECTED",
+        reason: "Revise o cronograma de execução.",
+        responsibleId: 1,
+      },
+    ]);
+
+    const html = renderToStaticMarkup(await HomePage());
+
+    expect(html).toContain("Curso indeferido: Projeto de extensão");
+    expect(html).toContain("Revise o cronograma de execução.");
+    expect(html).toContain('href="/cursos/12/editar"');
+    expect(pageRequest).not.toHaveBeenCalledWith(
+      "/enroll/enrollments/me",
+      "/inicio",
+    );
+  });
+
   it("mostra estado genérico sem buscar dados não autorizados", async () => {
     getCurrentUser.mockResolvedValue(user([]));
     const html = renderToStaticMarkup(await HomePage());

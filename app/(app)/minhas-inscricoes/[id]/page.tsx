@@ -16,6 +16,14 @@ function enrollmentDetails(item: unknown) {
   return {
     id,
     status: String(record.status ?? "PENDING"),
+    rejectionReason:
+      typeof record.statusReason === "string"
+        ? record.statusReason
+        : typeof record.reason === "string"
+          ? record.reason
+          : typeof record.rejectionReason === "string"
+            ? record.rejectionReason
+            : "",
     courseTitle: String(course.title),
     householdIncomeCents:
       typeof record.householdIncomeCents === "number"
@@ -59,6 +67,7 @@ export default async function EnrollmentPage({
       enrollmentId={enrollment.id}
       courseTitle={enrollment.courseTitle}
       status={enrollment.status}
+      rejectionReason={enrollment.rejectionReason}
       householdIncomeCents={enrollment.householdIncomeCents}
       householdSize={enrollment.householdSize}
       canUpdateHousehold={can(session.user, "manage-own-enrollments")}

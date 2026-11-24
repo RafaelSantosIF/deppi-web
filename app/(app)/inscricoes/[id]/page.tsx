@@ -1,7 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { EnrollmentReview } from "@/components/enrollment-review";
 import { can } from "@/lib/permissions";
-import { normalizeEnrollmentDocuments } from "@/lib/enrollments";
+import {
+  normalizeEnrollmentContact,
+  normalizeEnrollmentDocuments,
+} from "@/lib/enrollments";
 import { pageRequest, requireSession } from "@/lib/session";
 import type { EnrollmentQueueItem } from "@/lib/types";
 
@@ -12,6 +15,7 @@ function normalizeReviewRecord(data: unknown, courseTitle: string): EnrollmentQu
     root.enrollment && typeof root.enrollment === "object"
       ? (root.enrollment as Record<string, unknown>)
       : root;
+  const contact = normalizeEnrollmentContact(item);
   const id = Number(item.id);
   const courseId = Number(item.courseId);
   if (!Number.isInteger(id) || !Number.isInteger(courseId)) return null;
@@ -19,6 +23,8 @@ function normalizeReviewRecord(data: unknown, courseTitle: string): EnrollmentQu
     id,
     status: String(item.status ?? "PENDING"),
     name: String(item.name ?? "Aluno"),
+    email: contact.email,
+    registration: contact.registration,
     institution: String(item.institution ?? ""),
     category: String(item.category ?? ""),
     bond: String(item.bond ?? ""),

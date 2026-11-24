@@ -7,6 +7,9 @@ import type {
   EnrollmentSummary,
 } from "@/lib/types";
 import { EmptyState, Icon, StatusBadge } from "@/components/ui";
+import { HomeFeedbackNotifications } from "@/components/home-feedback-notifications";
+import { normalizeCourses } from "@/lib/courses";
+import { normalizeEnrollments } from "@/lib/enrollments";
 
 const numberFormatter = new Intl.NumberFormat("pt-BR");
 
@@ -76,16 +79,27 @@ async function loadDashboard() {
   }
 }
 
-async function loadStudentData() {
+async function loadStudentData(userId: number, canLoadEnrollments: boolean) {
   try {
-    const [courses, enrollments] = await Promise.all([
-      pageRequest<CourseSummary[]>("/courses?status=PUBLISHED", "/inicio"),
-      pageRequest<EnrollmentSummary[]>("/enroll/enrollments/me", "/inicio"),
+    const [courseData, enrollmentData] = await Promise.all([
+      pageRequest<unknown>("/courses", "/inicio"),
+      canLoadEnrollments
+        ? pageRequest<unknown>("/enroll/enrollments/me", "/inicio")
+        : Promise.resolve([]),
     ]);
-    return { courses, enrollments, error: false };
+    const allCourses = normalizeCourses(courseData);
+    return {
+      courses: allCourses.filter((course) => course.status === "PUBLISHED"),
+      rejectedCourses: allCourses.filter(
+        (course) =>
+          course.status === "REJECTED" && course.responsibleId === userId,
+      ),
+      enrollments: normalizeEnrollments(enrollmentData),
+      error: false,
+    };
   } catch (error) {
     if (!(error instanceof ApiError)) throw error;
-    return { courses: [], enrollments: [], error: true };
+    return { courses: [], rejectedCourses: [], enrollments: [], error: true };
   }
 }
 
@@ -257,14 +271,27 @@ function AdminHome({ data }: { data: DashboardData }) {
 }
 
 function StudentHome({
+  userId,
   courses,
+  rejectedCourses,
   enrollments,
 }: {
+  userId: number;
   courses: CourseSummary[];
+  rejectedCourses: CourseSummary[];
   enrollments: EnrollmentSummary[];
 }) {
+  const rejectedEnrollments = enrollments.filter(
+    (item) => item.status === "REJECTED",
+  );
+
   return (
     <>
+      <HomeFeedbackNotifications
+        userId={userId}
+        enrollments={rejectedEnrollments}
+        rejectedCourses={rejectedCourses}
+      />
       <div className="home-grid">
         <div className="card metric-card metric-primary">
           <Icon name="school" size={22} />
@@ -359,12 +386,20 @@ export default async function HomePage() {
   if (can(user, "view-dashboard")) {
     const result = await loadDashboard();
     content = result.data ? <AdminHome data={result.data} /> : <ErrorPanel />;
-  } else if (can(user, "view-courses")) {
-    const result = await loadStudentData();
+  } else if (can(user, "view-courses", "edit-own-course", "create-course")) {
+    const result = await loadStudentData(
+      user.id,
+      can(user, "enroll", "manage-own-enrollments"),
+    );
     content = result.error ? (
       <ErrorPanel />
     ) : (
-      <StudentHome courses={result.courses} enrollments={result.enrollments} />
+      <StudentHome
+        userId={user.id}
+        courses={result.courses}
+        rejectedCourses={result.rejectedCourses}
+        enrollments={result.enrollments}
+      />
     );
   } else {
     content = (

@@ -15,10 +15,12 @@ async function send(path: string, method: string, body?: BodyInit) {
         : { "Content-Type": "application/json" },
   });
   const result = await response.json();
-  if (!response.ok)
+  if (!response.ok || !result.success)
     throw new ProfileRequestError(
       response.status,
-      result.error || "Não foi possível salvar a alteração.",
+      typeof result.error === "string"
+        ? result.error
+        : "Não foi possível salvar a alteração.",
     );
   return result;
 }
@@ -39,10 +41,17 @@ function splitPhones(value: string) {
     .filter(Boolean);
 }
 
+function isStudentRole(role: string) {
+  const normalized = role.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return normalized.includes("alun") || normalized.includes("estudante");
+}
+
 export function ProfileForms({ profile }: { profile: UserProfile }) {
   const router = useRouter();
+  const isStudent = isStudentRole(profile.role.name);
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
+  const [registration, setRegistration] = useState(profile.registration ?? "");
   const [personalEmail, setPersonalEmail] = useState(
     profile.personalEmail ?? "",
   );
@@ -111,6 +120,7 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
           name,
           email,
           personalEmail,
+          ...(isStudent ? { registration: registration.trim() } : {}),
           personalPhones: splitPhones(personalPhones),
           institutionalPhones: splitPhones(institutionalPhones),
         }),
@@ -238,6 +248,12 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
           <small>Cargo</small>
           <RoleBadge name={profile.role.name} />
         </div>
+        {isStudent && registration && (
+          <div className="profile-detail">
+            <small>Matrícula</small>
+            <strong className="mono">{registration}</strong>
+          </div>
+        )}
         {profile.personalData?.cpf && (
           <div className="profile-detail">
             <small>CPF</small>
@@ -288,6 +304,18 @@ export function ProfileForms({ profile }: { profile: UserProfile }) {
               />
             </div>
           </div>
+          {isStudent && (
+            <div className="field">
+              <label htmlFor="profile-registration">Matrícula</label>
+              <input
+                className="input"
+                id="profile-registration"
+                value={registration}
+                onChange={(event) => setRegistration(event.target.value)}
+                maxLength={20}
+              />
+            </div>
+          )}
           <div className="field-grid">
             <div className="field">
               <label htmlFor="personal-email">E-mail pessoal</label>

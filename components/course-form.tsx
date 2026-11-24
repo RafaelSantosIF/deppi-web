@@ -245,6 +245,16 @@ export function CourseForm({
           {institutionsError && <Alert>{institutionsError}</Alert>}
         </div>
       )}
+      {course?.status === "REJECTED" && (
+        <div className="course-editor-alerts">
+          <Alert>
+            <strong>O DEPPI indeferiu este curso.</strong>{" "}
+            Justificativa:{" "}
+            {course.rejectionReason?.trim() ||
+              "O DEPPI não informou uma justificativa."}
+          </Alert>
+        </div>
+      )}
 
       <form className="course-editor-form" onSubmit={submit}>
         <section className="card course-editor-info">

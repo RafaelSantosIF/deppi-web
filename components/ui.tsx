@@ -5,36 +5,40 @@ const paths: Record<string, ReactNode> = {
   home: <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" />,
   school: (
     <>
-      <path d="m2 9 10-5 10 5-10 5zM6 11v5c4 3 8 3 12 0v-5M22 9v7" />
+      <path d="m2 9 10-5 10 5-10 5z" />
+      <path d="M6 11v5c3.5 2.7 8.5 2.7 12 0v-5M22 9v7" />
     </>
   ),
   assignment: (
     <>
       <rect x="5" y="4" width="14" height="17" rx="2" />
-      <path d="M9 4.5h6M8 10h8M8 14h8M8 18h5" />
+      <path d="M9 4V3h6v2H9z" />
+      <path d="m8 10 1.2 1.2L11 9.5M13 10h3M8 15h8M8 18h6" />
     </>
   ),
   list_alt: (
     <>
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M8 9h9M8 14h9" />
+      <rect x="3.5" y="4" width="17" height="16" rx="2" />
+      <path d="m7 9 .8.8L9.5 8M12 9h5M7 15h10" />
     </>
   ),
   badge: (
     <>
-      <rect x="4" y="6" width="16" height="14" rx="2" />
-      <path d="M9 6V4h6v2M8 12h8M8 16h5" />
+      <path d="M9 4V3h6v1" />
+      <rect x="4" y="5" width="16" height="16" rx="2" />
+      <circle cx="9" cy="11" r="2" />
+      <path d="M6.5 17c.3-1.6 1.1-2.5 2.5-2.5s2.2.9 2.5 2.5M14 10h3M14 14h3M14 17h3" />
     </>
   ),
   group: (
     <>
       <circle cx="9" cy="8" r="3" />
-      <path d="M3 19c0-3 2-5 6-5s6 2 6 5M17 6a3 3 0 0 1 0 6M17 15c2.5.2 4 1.6 4 4" />
+      <path d="M3 19c0-3 2-5 6-5s6 2 6 5M16.5 5.5a3 3 0 0 1 0 5.8M17 14c2.4.4 3.8 1.9 4 4" />
     </>
   ),
   apartment: (
     <>
-      <path d="M4 21V5l8-3 8 3v16M2 21h20M8 9h1M15 9h1M8 13h1M15 13h1M10 21v-5h4v5" />
+      <path d="M4 21V5l8-3 8 3v16M2 21h20M8.5 9h.01M15.5 9h.01M8.5 14h.01M15.5 14h.01M10 21v-5h4v5" />
     </>
   ),
   bar_chart: (
@@ -126,6 +130,12 @@ const paths: Record<string, ReactNode> = {
       <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" />
     </>
   ),
+  radio_button_unchecked: <circle cx="12" cy="12" r="8.5" />,
+  delete: (
+    <>
+      <path d="M4 7h16M10 11v6M14 11v6M5 7l1 14h12l1-14M9 7V4h6v3" />
+    </>
+  ),
 };
 
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {
@@ -139,6 +149,7 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
+      focusable="false"
       aria-hidden="true"
     >
       {paths[name] ?? paths.warning}

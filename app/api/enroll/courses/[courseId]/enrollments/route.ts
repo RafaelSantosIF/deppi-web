@@ -10,6 +10,9 @@ function validEnrollmentPayload(
   const start = Date.parse(String(enrollment.participationStart ?? ""));
   const end = Date.parse(String(enrollment.participationEnd ?? ""));
   return (
+    (enrollment.registration === undefined ||
+      (typeof enrollment.registration === "string" &&
+        enrollment.registration.length <= 20)) &&
     typeof enrollment.name === "string" &&
     enrollment.name.trim().length > 0 &&
     typeof enrollment.institution === "string" &&
@@ -67,7 +70,13 @@ export async function POST(
       `/enroll/courses/${courseId}/enrollments`,
       {
         method: "POST",
-        body: JSON.stringify({ ...body, userId: session.user.id }),
+        body: JSON.stringify({
+          ...body,
+          ...(typeof body.registration === "string" && body.registration.trim()
+            ? { registration: body.registration.trim() }
+            : {}),
+          userId: session.user.id,
+        }),
       },
     );
     return Response.json({ success: true, data });
